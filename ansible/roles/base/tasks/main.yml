@@ -1,28 +1,29 @@
 ---
 - name: Systeem updates uitvoeren
-  apt:
-    update_cache: yes
+  ansible.builtin.apt:
+    update_cache: true
     upgrade: dist
 
 - name: Basis software installeren
-  apt:
+  ansible.builtin.apt:
     name: [curl, git, mergerfs, restic, ufw]
     state: present
 
 - name: Tailscale VPN installeren via officieel script
-  shell: curl -fsSL https://tailscale.com/install.sh | sh
+  ansible.builtin.shell: curl -fsSL https://tailscale.com/install.sh | sh
   args:
     creates: /usr/bin/tailscale
 
 - name: Tailscale activeren
-  shell: tailscale up --authkey={{ tailscale_key }}
+  ansible.builtin.shell: tailscale up --authkey={{ tailscale_key }}
   register: ts_out
   changed_when: "'already running' not in ts_out.stdout"
 
 - name: Mappen maken voor schijven en USB
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
+    mode: '0755'
   loop:
     - "/mnt/disk1"
     - "/mnt/disk2"

@@ -1,6 +1,6 @@
 ---
 - name: Appdata en Media directorystructuur bouwen
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
     owner: "{{ puid }}"
@@ -14,14 +14,16 @@
     - "{{ storage_merged }}/data/media/movies"
 
 - name: Interne .env file genereren voor Docker
-  template:
+  ansible.builtin.template:
     src: env.j2
     dest: "{{ appdata_dir }}/.env"
+    mode: '0600'
 
 - name: Docker Compose file naar server kopiëren
-  copy:
+  ansible.builtin.copy:
     src: ../../../../compose/docker-compose.yml
     dest: "{{ appdata_dir }}/docker-compose.yml"
+    mode: '0644'
 
 - name: Volledige media stack opstarten
   community.docker.docker_compose_v2:

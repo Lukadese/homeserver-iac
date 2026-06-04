@@ -1,7 +1,7 @@
 ---
 - name: Deploy Lean & Mean Homeserver
   hosts: homeservers
-  become: yes
+  become: true
   roles:
     - base
     - docker
