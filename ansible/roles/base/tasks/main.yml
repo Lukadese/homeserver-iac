@@ -9,15 +9,21 @@
     name: [curl, git, mergerfs, restic, ufw]
     state: present
 
-- name: Tailscale VPN installeren via officieel script
-  ansible.builtin.shell: curl -fsSL https://tailscale.com/install.sh | sh
+- name: Tailscale installatiescript downloaden
+  ansible.builtin.get_url:
+    url: https://tailscale.com/install.sh
+    dest: /tmp/install-tailscale.sh
+    mode: '0700'
+
+- name: Tailscale VPN installeren via script
+  ansible.builtin.command: /tmp/install-tailscale.sh
   args:
     creates: /usr/bin/tailscale
 
 - name: Tailscale activeren
-  ansible.builtin.shell: tailscale up --authkey={{ tailscale_key }}
-  register: ts_out
-  changed_when: "'already running' not in ts_out.stdout"
+  ansible.builtin.command: tailscale up --authkey={{ tailscale_key }}
+  register: base_ts_out
+  changed_when: "'already running' not in base_ts_out.stdout"
 
 - name: Mappen maken voor schijven en USB
   ansible.builtin.file:
