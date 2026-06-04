@@ -4,7 +4,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Test Docker Compose Syntax
         run: docker compose -f compose/docker-compose.yml config -q
       - name: Install Ansible Lint
