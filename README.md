@@ -1,6 +1,7 @@
 # Lean Mean Media Machine
 
 [![CI](https://github.com/Lukadese/lean-mean-media-machine/actions/workflows/ci.yml/badge.svg)](https://github.com/Lukadese/lean-mean-media-machine/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Lukadese/lean-mean-media-machine)](https://github.com/Lukadese/lean-mean-media-machine/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A GitOps-based Infrastructure-as-Code setup for a fully automated, power-efficient 4K media server. Built and tuned on a low-power **Intel N100** box (comfortably handles up to ~4 simultaneous 4K viewers), but generic enough for any Debian machine — one disk or many, with or without a backup drive.
@@ -239,7 +240,7 @@ After the deploy everything is *running*, but the apps don't know each other yet
 ## Backups & disaster recovery
 
 - **What is backed up:** `/opt/appdata` (all your container configs and databases). Your media itself is *not* backed up — it's reproducible via the *arr apps.
-- **When:** every day at 04:00 (backup) and every Sunday at 05:00 (repository integrity check), via cron.
+- **When:** every day at 04:00 (backup) and every Sunday at 06:00 (repository integrity check), via cron.
 - **Where:** any Restic backend — a local USB drive, SFTP, S3, Backblaze B2, ... configured with the `restic_repository` variable. For real disaster resilience (fire, theft, power surge), prefer a remote target or combine both.
 - **How:** Restic, encrypted, incremental. Retention: 7 daily + 4 weekly + 6 monthly snapshots.
 - **Consistency:** the stack is stopped during the backup and restarted afterwards — even if the backup fails halfway.
