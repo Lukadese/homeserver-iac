@@ -36,6 +36,10 @@ restic backup {{ appdata_dir }} \
   --exclude="{{ appdata_dir }}/jellyfin/metadata" \
   --exclude="{{ appdata_dir }}/jellyfin/transcodes"
 
+# Bring the stack back up before the (potentially slow) prune; the trap
+# makes a second call a harmless no-op
+restart_stack
+
 echo "Pruning old backups..."
 restic forget --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --prune
 {% if backup_healthcheck_url %}
