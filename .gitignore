@@ -1,4 +1,7 @@
 .vault_pass
+# Personal encrypted secrets — never commit these to a public repo.
+# In your own private copy you may remove this line to version your vault.
+ansible/inventory/group_vars/vault.yml
 ansible/.ansible_cache
 *.retry
 *.bak

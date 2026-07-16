@@ -71,13 +71,17 @@ It connects to your server, detects your disks/timezone/user IDs, walks you thro
 
    Also adjust `timezone` and `puid`/`pgid` if needed.
 
-### Step 5: Add your secrets to the Ansible Vault
+### Step 5: Create your secrets vault
 
-The sensitive values (VPN, Tailscale, Restic) are stored in an encrypted vault file. Edit it with:
+The sensitive values (VPN, Tailscale, Restic) live in an encrypted vault file that is **git-ignored** — your secrets can never end up in a public repository. Create yours from the example:
 
 ```bash
-ansible-vault edit ansible/inventory/group_vars/vault.yml
+cp ansible/inventory/group_vars/vault.yml.example ansible/inventory/group_vars/vault.yml
+nano ansible/inventory/group_vars/vault.yml    # fill in your values
+ansible-vault encrypt ansible/inventory/group_vars/vault.yml
 ```
+
+(Edit it later with `ansible-vault edit ansible/inventory/group_vars/vault.yml`.)
 
 Make sure it defines the keys your `gluetun_env` block references, plus Tailscale and Restic. For OpenVPN:
 
@@ -96,7 +100,7 @@ vault_wireguard_private_key: "your-wireguard-private-key"
 vault_wireguard_addresses: "10.64.222.21/32"   # from your provider's WireGuard config
 ```
 
-> If you are starting a brand-new vault, create it with `ansible-vault create ansible/inventory/group_vars/vault.yml` instead.
+> **Keeping your own copy in Git?** In a *private* repository it's fine to version the encrypted vault — remove the `vault.yml` line from `.gitignore` there. Never do this in a public repository.
 
 > ⚠️ **Store the vault password AND keep it recoverable.** The complete disaster-recovery chain is: Git repo + vault password + the Restic password inside the vault. If your house burns down and the vault password only existed on your laptop, your backups are permanently unrecoverable. Put the vault password in a password manager that syncs outside your home.
 

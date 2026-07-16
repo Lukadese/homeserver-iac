@@ -1,6 +1,9 @@
 # Lean & Mean Homeserver (IaC)
 
-A GitOps-based Infrastructure-as-Code setup for a fully automated, power-efficient 4K media server. Purpose-built for a low-power **Intel N100** box (comfortably handles up to ~4 simultaneous 4K viewers).
+[![CI](https://github.com/Lukadese/homeserver-iac/actions/workflows/ci.yml/badge.svg)](https://github.com/Lukadese/homeserver-iac/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+A GitOps-based Infrastructure-as-Code setup for a fully automated, power-efficient 4K media server. Built and tuned on a low-power **Intel N100** box (comfortably handles up to ~4 simultaneous 4K viewers), but generic enough for any Debian machine — one disk or many, with or without a backup drive.
 
 Everything — the OS, disks, networking, containers and backups — is described in Ansible. You make changes in Git and roll them out with a single command. No manual clicking on the server.
 
@@ -19,6 +22,9 @@ Everything — the OS, disks, networking, containers and backups — is describe
 - [Backups & disaster recovery](#backups--disaster-recovery)
 - [Image versioning](#image-versioning)
 - [Repository layout](#repository-layout)
+- [Contributing & support](#contributing--support)
+- [Legal](#legal)
+- [License](#license)
 
 ---
 
@@ -122,13 +128,15 @@ Both `torrents/` and `media/` live under the **same** `data/` mount. That shared
 
 ## Quick start
 
+> **Using this project for your own server?** Click **"Use this template"** on GitHub (or fork it) to get your own copy first — that's where your personal configuration will live. Keep your copy **private** if you plan to commit your encrypted vault to it.
+
 ### The easy way: the setup wizard (recommended)
 
 On your laptop (Linux/macOS/WSL — the same place Ansible runs):
 
 ```bash
-git clone <your-repo-url>
-cd homeserver-iac
+git clone https://github.com/<your-username>/<your-copy>.git
+cd <your-copy>
 ./setup.sh
 ```
 
@@ -138,11 +146,11 @@ The wizard connects to your server over SSH, **detects your disks, timezone and 
 
 > Prefer to configure by hand, or want to understand what the wizard does? For a fully detailed walkthrough see **[BOOTSTRAP.md](BOOTSTRAP.md)**.
 
-**1. Clone the repository (on your laptop):**
+**1. Clone your copy of the repository (on your laptop):**
 
 ```bash
-git clone <your-repo-url>
-cd homeserver-iac
+git clone https://github.com/<your-username>/<your-copy>.git
+cd <your-copy>
 ```
 
 **2. Point Ansible at your server** — edit [`ansible/inventory/hosts.yml`](ansible/inventory/hosts.yml) and set `ansible_host` (your server's IP) and `ansible_user` (your sudo user).
@@ -157,10 +165,12 @@ cd homeserver-iac
 - Pick your optional services in `compose_profiles` (`iptv` = Dispatcharr, `management` = Portainer, `logs` = Dozzle).
 - Adjust `timezone`, `puid`/`pgid` if needed.
 
-**4. Add your secrets to the vault** — the secrets live in an encrypted Ansible Vault file:
+**4. Create your secrets vault** — copy the example, fill in your values, and encrypt it:
 
 ```bash
-ansible-vault edit ansible/inventory/group_vars/vault.yml
+cp ansible/inventory/group_vars/vault.yml.example ansible/inventory/group_vars/vault.yml
+nano ansible/inventory/group_vars/vault.yml
+ansible-vault encrypt ansible/inventory/group_vars/vault.yml
 ```
 
 It must define the keys referenced by your `gluetun_env` block, plus Tailscale and Restic. For OpenVPN:
@@ -268,7 +278,8 @@ All containers deliberately run on the `:latest` tag and are pulled on every dep
 │   │   ├── hosts.yml               # your server's IP and user
 │   │   └── group_vars/
 │   │       ├── all.yml             # disks, backups, VPN, profiles, non-secret config
-│   │       └── vault.yml           # encrypted secrets (VPN, Tailscale, Restic)
+│   │       └── vault.yml.example   # template for your encrypted secrets
+│   │                               # (your real vault.yml is git-ignored)
 │   └── roles/
 │       ├── base/                   # updates, packages, disks, MergerFS, Tailscale, UFW,
 │       │                           # auto security updates, backup/restore/check scripts
@@ -280,3 +291,23 @@ All containers deliberately run on the `:latest` tag and are pulled on every dep
 ├── BOOTSTRAP.md                    # detailed install & disaster-recovery guide
 └── README.md
 ```
+
+---
+
+## Contributing & support
+
+- ❓ **Questions or setup help** → [Discussions](../../discussions)
+- 🐛 **Bugs & feature requests** → [Issues](../../issues)
+- 🔧 **Want to contribute?** → see [CONTRIBUTING.md](CONTRIBUTING.md) — PRs are very welcome
+
+---
+
+## Legal
+
+This project is an automation template for self-hosting your own media. It downloads nothing by itself. You are responsible for what you download and share with it — only use it for content you have the rights to. The VPN integration exists to protect your privacy, not to enable infringement.
+
+---
+
+## License
+
+Released under the [MIT License](LICENSE).
