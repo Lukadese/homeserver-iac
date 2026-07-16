@@ -5,26 +5,26 @@ export RESTIC_REPOSITORY="/mnt/usb-backup/restic-repo"
 export RESTIC_PASSWORD="{{ restic_pass }}"
 
 if [ ! -d "/mnt/usb-backup/lost+found" ] && [ ! -d "$RESTIC_REPOSITORY" ]; then
-    echo "ERROR: USB-stick niet gevonden!"
+    echo "ERROR: USB drive not found!"
     exit 1
 fi
 
-# Initialiseer de repo als die nog niet bestaat (voorkomt falende eerste backup)
+# Initialise the repo if it doesn't exist yet (prevents a failing first backup)
 if ! restic snapshots &>/dev/null; then
-    echo "Restic repo nog niet geinitialiseerd. Aanmaken..."
+    echo "Restic repo not initialised yet. Creating it..."
     restic init
 fi
 
-echo "Stoppen containers voor consistente backup..."
+echo "Stopping containers for a consistent backup..."
 docker stop jellyfin radarr sonarr prowlarr bazarr dispatcharr seerr qbittorrent || true
 
-echo "Start Restic backup..."
+echo "Starting Restic backup..."
 restic backup /opt/appdata \
   --exclude="/opt/appdata/jellyfin/metadata" \
   --exclude="/opt/appdata/jellyfin/transcodes"
 
-echo "Containers herstarten..."
+echo "Restarting containers..."
 docker start qbittorrent seerr dispatcharr bazarr prowlarr sonarr radarr jellyfin || true
 
-echo "Schoonmaak oude backups..."
+echo "Pruning old backups..."
 restic forget --keep-daily 7 --keep-weekly 4 --prune

@@ -1,83 +1,133 @@
-# Installatie & Disaster Recovery Gids
+# Install & Disaster Recovery Guide
 
-Deze gids beschrijft hoe je de homeserver vanaf nul installeert (Bootstrapping) en hoe je een back-up herstelt in het geval van een crash (Disaster Recovery).
+This guide covers installing the homeserver from scratch (bootstrapping) and restoring from a backup after a crash (disaster recovery).
 
 ---
 
-## 1. Eerste Installatie (Bootstrap)
+## 1. First-time install (bootstrap)
 
-Volg deze stappen om het project voor de eerste keer uit te rollen op een nieuwe server:
+Follow these steps to deploy the project on a brand-new server for the first time.
 
-### Stap 1: OS & Netwerk
-1. Installeer een schone versie van **Debian** (of Ubuntu Server) op de Intel N100 server.
-2. Zorg ervoor dat SSH-toegang werkt en dat jouw gebruiker `sudo`-rechten heeft.
-3. Sluit de harde schijven en de USB-backupschijf fysiek aan op de server.
+### Step 1: OS & network
 
-### Stap 2: Beheermachine voorbereiden (Laptop)
-1. Installeer **Git** en **Ansible** op je laptop.
-2. Clone deze repository naar je laptop:
+1. Install a clean copy of **Debian** (or Ubuntu Server) on the Intel N100 machine.
+2. Make sure SSH access works and that your user has `sudo` rights.
+3. Physically attach the data disks and the USB backup drive. Format them as **ext4** if they aren't already.
+
+### Step 2: Prepare your control machine (laptop)
+
+1. Install **Git** and **Ansible** on your laptop.
+2. Clone this repository:
    ```bash
-   git clone <jouw-repo-url>
+   git clone <your-repo-url>
    cd homeserver-iac
    ```
 
-### Stap 3: Schijf-UUID's achterhalen
-1. Log in op de nieuwe server via SSH.
-2. Run het volgende commando om de UUID's van je aangesloten harde schijven en USB-stick te achterhalen:
+### Step 3: Find your disk UUIDs
+
+1. Log in to the new server over SSH.
+2. Run the following command to list the UUIDs of your attached disks and USB drive:
    ```bash
    sudo blkid
    ```
-3. Kopieer de UUID's van de data-schijven (bijv. `/dev/sdb1`, `/dev/sdc1`) en de USB-backupschijf.
+3. Note down the UUIDs of the data disks (e.g. `/dev/sdb1`, `/dev/sdc1`) and of the USB backup drive.
 
-### Stap 4: Configuratie bijwerken
-1. Open [ansible/inventory/hosts.yml](ansible/inventory/hosts.yml) op je laptop en pas het IP-adres (`ansible_host`) en de gebruikersnaam (`ansible_user`) aan.
-2. Open [ansible/inventory/group_vars/all.yml](ansible/inventory/group_vars/all.yml) en vervang de voorbeeld-UUID's bij `data_disks` en `backup_usb` door de echte UUID's van jouw schijven. Pas hier ook `lan_subnet` aan naar het subnet van jouw thuisnetwerk.
+> **Tip:** using UUIDs (instead of `/dev/sdX`) means your mounts keep working even if Linux reorders the drive letters after a reboot.
 
-### Stap 5: Ansible Vault wachtwoord instellen
-1. Zorg ervoor dat je het wachtwoord van de Ansible Vault bij de hand hebt.
-2. Maak een bestand genaamd `.vault_pass` aan in de root van dit project (dit bestand is al toegevoegd aan `.gitignore` zodat het nooit naar GitHub wordt gepusht):
-   ```bash
-   echo "JOUW_VAULT_WACHTWOORD" > .vault_pass
-   ```
+### Step 4: Update the configuration
 
-### Stap 6: Het Playbook uitvoeren (Deploy)
-1. Navigeer op je laptop naar de `ansible` map en start de uitrol:
-   ```bash
-   ansible-playbook -i inventory/hosts.yml site.yml --vault-password-file ../.vault_pass
-   ```
-2. Ansible regelt nu de rest:
-   - Systeem-updates en basispakketten installeren (`mergerfs`, `restic`, `ufw`, `curl`, `git`).
-   - Schijven koppelen en MergerFS configureren op `/mnt/storage`.
-   - Tailscale installeren en activeren.
-   - De back-upscripts configureren en inplannen via cron.
-   - Docker installeren en de volledige mediastack opstarten.
+1. Open [ansible/inventory/hosts.yml](ansible/inventory/hosts.yml) and set the IP address (`ansible_host`) and username (`ansible_user`) of your server.
+2. Open [ansible/inventory/group_vars/all.yml](ansible/inventory/group_vars/all.yml) and:
+   - Replace the example UUIDs under `data_disks` and `backup_usb` with your real ones.
+   - Set `lan_subnet` to your home network's subnet (e.g. `192.168.1.0/24`). This controls which network the firewall trusts and which subnet Gluetun allows to reach the WebUIs — get it wrong and the WebUIs will be unreachable from your LAN.
+   - Adjust `timezone` and `puid`/`pgid` if needed.
+
+### Step 5: Add your secrets to the Ansible Vault
+
+The sensitive values (VPN, Tailscale, Restic) are stored in an encrypted vault file. Edit it with:
+
+```bash
+ansible-vault edit ansible/inventory/group_vars/vault.yml
+```
+
+Make sure it defines all of these keys:
+
+```yaml
+vault_vpn_provider: "your-provider"      # e.g. mullvad, protonvpn, nordvpn
+vault_vpn_user: "your-vpn-username"
+vault_vpn_password: "your-vpn-password"
+vault_tailscale_key: "tskey-auth-xxxx"   # from https://login.tailscale.com/admin/settings/keys
+vault_restic_password: "a-strong-backup-password"
+```
+
+> If you are starting a brand-new vault, create it with `ansible-vault create ansible/inventory/group_vars/vault.yml` instead.
+> **Do not lose `vault_restic_password`** — without it your backups cannot be decrypted or restored.
+
+### Step 6: Save the vault password
+
+Create a file named `.vault_pass` in the project root. It's already listed in `.gitignore`, so it will never be pushed to GitHub:
+
+```bash
+echo "YOUR_VAULT_PASSWORD" > .vault_pass
+```
+
+### Step 7: Run the playbook (deploy)
+
+From your laptop, go into the `ansible` folder and start the deployment:
+
+```bash
+cd ansible
+ansible-playbook -i inventory/hosts.yml site.yml --vault-password-file ../.vault_pass
+```
+
+Ansible now takes care of everything:
+
+- Installing system updates and base packages (`mergerfs`, `restic`, `ufw`, `curl`, `git`).
+- Mounting the disks and configuring MergerFS at `/mnt/storage`.
+- Installing and activating Tailscale.
+- Enabling the UFW firewall (SSH allowed, LAN and Tailscale trusted, everything else denied).
+- Installing the backup scripts and scheduling them via cron.
+- Installing Docker and bringing up the full media stack.
+
+When it finishes, head to the [service list in the README](README.md#accessing-your-services) to log in to each app.
 
 ---
 
-## 2. Disaster Recovery (Restore)
+## 2. Disaster recovery (restore)
 
-Als je server is gecrasht en je een nieuwe Debian-installatie hebt klaargezet, volg dan deze stappen om al je Docker-data en configuraties (appdata) te herstellen:
+If your server crashed and you've prepared a fresh Debian install, follow these steps to restore all your Docker data and configuration (appdata).
 
-### Stap 1: Basis uitrol
-1. Volg **Stap 1 t/m Stap 6** van de eerste installatie hierboven. Dit zorgt ervoor dat alle schijven, MergerFS en Restic correct zijn geïnstalleerd en het restore-script klaarstaat op de server.
+### Step 1: Redeploy the base
 
-### Stap 2: Docker containers stoppen
-Voordat je de database- en configuratiebestanden overschrijft, moet de mediastack tijdelijk worden stopgezet. Log in op de server en voer uit:
+1. Follow **Step 1 through Step 7** of the first-time install above. This ensures the disks, MergerFS and Restic are set up correctly and that the restore script is present on the server.
+
+> During the base deploy, the media stack will come up with empty configs. That's expected — you'll overwrite them from the backup in the next steps.
+
+### Step 2: Stop the Docker containers
+
+Before overwriting the database and configuration files, stop the stack. Log in to the server and run:
+
 ```bash
-docker stop jellyfin radarr sonarr prowlarr bazarr dispatcharr seerr || true
+docker stop jellyfin radarr sonarr prowlarr bazarr dispatcharr seerr qbittorrent || true
 ```
 
-### Stap 3: Restore-script uitvoeren
-Voer het gegenereerde restore-script uit op de server:
+### Step 3: Run the restore script
+
+Run the generated restore script on the server:
+
 ```bash
 sudo /opt/scripts/restore.sh
 ```
-*Dit script vraagt om bevestiging, leest de meest recente back-up van je USB-schijf via Restic en zet deze terug naar `/opt/appdata`.*
 
-### Stap 4: Server herstarten of containers starten
-Zodra de restore is voltooid, kun je de server herstarten of de mediastack direct opnieuw opstarten:
+*The script asks for confirmation, reads the most recent snapshot from your USB drive via Restic, and restores it into `/opt/appdata`.*
+
+### Step 4: Reboot, or start the containers
+
+Once the restore is complete, either reboot the server or bring the media stack back up directly:
+
 ```bash
 cd /opt/appdata
 docker compose up -d
 ```
-Jouw media server is nu weer volledig up-to-date en operationeel!
+
+Your media server is now fully restored and operational again.

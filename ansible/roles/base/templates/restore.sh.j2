@@ -3,10 +3,10 @@ set -e
 export RESTIC_REPOSITORY="/mnt/usb-backup/restic-repo"
 export RESTIC_PASSWORD="{{ restic_pass }}"
 
-read -p "Let op: Dit overschrijft /opt/appdata. Zeker weten? (y/N) " -n 1 -r
+read -p "Warning: this overwrites /opt/appdata. Are you sure? (y/N) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     mkdir -p /opt/appdata
     restic restore latest --target /
-    echo "Restore voltooid! Herstart je server."
+    echo "Restore complete! Reboot your server."
 fi
