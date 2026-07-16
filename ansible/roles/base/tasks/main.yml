@@ -189,11 +189,13 @@
         job: "/bin/bash /opt/scripts/backup.sh >> /var/log/restic.log 2>&1"
         user: root
 
+    # 06:00 keeps clear of the 04:00 backup (which holds the repo lock) and
+    # finishes before the 06:30 auto-reboot window
     - name: Schedule the weekly backup verification via cron
       ansible.builtin.cron:
         name: "Weekly Restic Check"
         minute: "0"
-        hour: "5"
+        hour: "6"
         weekday: "0"
         job: "/bin/bash /opt/scripts/check.sh >> /var/log/restic.log 2>&1"
         user: root

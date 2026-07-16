@@ -334,7 +334,7 @@ disk_usage_threshold: 90
 
 # Reboot automatically when an update requires it (after the backup window).
 auto_reboot: true
-auto_reboot_time: "05:30"
+auto_reboot_time: "06:30"
 
 # Secrets pulled from the Ansible Vault
 tailscale_key: "{{ vault_tailscale_key }}"

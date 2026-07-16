@@ -67,7 +67,7 @@ Either way, finish with **[Step 8: Wire up the apps](#step-8-wire-up-the-apps-on
 
    **Backup monitoring (strongly recommended)** — create a free check at [healthchecks.io](https://healthchecks.io) and paste its ping URL into `backup_healthcheck_url`. You'll get an email whenever backups stop running. Without this, a broken backup goes unnoticed until the day you need it.
 
-   **System watchdog (strongly recommended)** — create a *second* healthchecks.io check and paste its URL into `system_healthcheck_url`. A daily watchdog then reports disk space, disk health (SMART) and container state — so a filling pool or a dying disk becomes an email instead of an outage. The related `auto_reboot` setting (default on) reboots the server at 05:30 when a kernel update requires it.
+   **System watchdog (strongly recommended)** — create a *second* healthchecks.io check and paste its URL into `system_healthcheck_url`. A daily watchdog then reports disk space, disk health (SMART) and container state — so a filling pool or a dying disk becomes an email instead of an outage. The related `auto_reboot` setting (default on) reboots the server at 06:30 when a kernel update requires it.
 
    **Network** — set `lan_subnet` to your home network's subnet (e.g. `192.168.1.0/24`). This controls which network the firewall trusts and which subnet Gluetun allows to reach the WebUIs — get it wrong and the WebUIs will be unreachable from your LAN.
 
@@ -134,7 +134,7 @@ Ansible now takes care of everything:
 - Mounting the disk(s) and configuring MergerFS at `/mnt/storage`.
 - Installing and activating Tailscale (first run only — redeploys skip it).
 - Enabling the UFW firewall (SSH allowed, LAN and Tailscale trusted, everything else denied).
-- Installing the backup, restore and verification scripts and scheduling them via cron (daily backup at 04:00, weekly integrity check on Sunday at 05:00).
+- Installing the backup, restore and verification scripts and scheduling them via cron (daily backup at 04:00, weekly integrity check on Sunday at 06:00).
 - Installing Docker (with log rotation) and bringing up the full media stack.
 
 When it finishes, the infrastructure is done — continue with Step 8 to wire the apps together.

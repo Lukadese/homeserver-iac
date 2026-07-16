@@ -1,0 +1,8 @@
+version: 2
+updates:
+  # Keep the CI workflow's action versions current — updates arrive as PRs
+  # that the existing CI pipeline validates.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
