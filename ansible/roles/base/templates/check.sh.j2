@@ -1,0 +1,23 @@
+#!/bin/bash
+set -e
+
+export RESTIC_REPOSITORY="{{ restic_repository }}"
+export RESTIC_PASSWORD="{{ restic_pass }}"
+{% for key, value in restic_env.items() %}
+export {{ key }}="{{ value }}"
+{% endfor %}
+
+echo "Verifying backup repository integrity..."
+if restic check; then
+    echo "Repository OK."
+{% if backup_healthcheck_url %}
+    curl -fsS -m 10 --retry 3 "{{ backup_healthcheck_url }}" > /dev/null || true
+{% endif %}
+else
+    echo "ERROR: repository check failed!"
+{% if backup_healthcheck_url %}
+    # Signal an explicit failure to the monitoring service
+    curl -fsS -m 10 --retry 3 "{{ backup_healthcheck_url }}/fail" > /dev/null || true
+{% endif %}
+    exit 1
+fi

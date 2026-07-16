@@ -49,37 +49,20 @@
     policy: deny
     direction: incoming
 
-- name: Create mount points for the data disks
+- name: Create mount points for the data disks and the storage pool
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
     owner: "{{ puid }}"
     group: "{{ pgid }}"
     mode: '0775'
-  loop:
-    - "/mnt/disk1"
-    - "/mnt/disk2"
-    - "{{ storage_merged }}"
-
-- name: Create mount point for the USB backup drive
-  ansible.builtin.file:
-    path: "{{ backup_usb.path }}"
-    state: directory
-    mode: '0755'
-
-- name: Mount the USB backup drive permanently (nofail avoids boot issues)
-  ansible.posix.mount:
-    path: "{{ backup_usb.path }}"
-    src: "{{ backup_usb.id }}"
-    fstype: ext4
-    opts: defaults,nofail
-    state: mounted
+  loop: "{{ (data_disks | map(attribute='path') | list) + [storage_merged] }}"
 
 - name: Mount the data disks
   ansible.posix.mount:
     path: "{{ item.path }}"
     src: "{{ item.id }}"
-    fstype: ext4
+    fstype: "{{ item.fstype | default('ext4') }}"
     opts: defaults,noatime
     state: mounted
   loop: "{{ data_disks }}"
@@ -87,7 +70,7 @@
 - name: Configure the MergerFS pool
   ansible.posix.mount:
     path: "{{ storage_merged }}"
-    src: "/mnt/disk*"
+    src: "{{ data_disks | map(attribute='path') | join(':') }}"
     fstype: fuse.mergerfs
     # requires-mounts-for makes MergerFS mount only after the data disks are mounted (prevents an empty pool after reboot)
     opts: >-
@@ -95,28 +78,62 @@
       data_disks | map(attribute='path') | map('regex_replace', '^', 'x-systemd.requires-mounts-for=') | join(',') }}
     state: mounted
 
-- name: Create the scripts directory
-  ansible.builtin.file:
-    path: /opt/scripts
-    state: directory
-    mode: '0755'
+- name: Configure backups
+  when: backup_enabled | bool
+  block:
+    - name: Create mount point for the backup drive
+      ansible.builtin.file:
+        path: "{{ backup_usb.path }}"
+        state: directory
+        mode: '0755'
+      when: backup_usb is defined
 
-- name: Deploy the Restic backup script
-  ansible.builtin.template:
-    src: backup.sh.j2
-    dest: /opt/scripts/backup.sh
-    mode: '0700'
+    - name: Mount the backup drive permanently (nofail avoids boot issues)
+      ansible.posix.mount:
+        path: "{{ backup_usb.path }}"
+        src: "{{ backup_usb.id }}"
+        fstype: "{{ backup_usb.fstype | default('ext4') }}"
+        opts: defaults,nofail
+        state: mounted
+      when: backup_usb is defined
 
-- name: Deploy the Restic restore script
-  ansible.builtin.template:
-    src: restore.sh.j2
-    dest: /opt/scripts/restore.sh
-    mode: '0700'
+    - name: Create the scripts directory
+      ansible.builtin.file:
+        path: /opt/scripts
+        state: directory
+        mode: '0755'
 
-- name: Schedule the daily Restic backup via cron
-  ansible.builtin.cron:
-    name: "Daily Restic Backup"
-    minute: "0"
-    hour: "4"
-    job: "/bin/bash /opt/scripts/backup.sh >> /var/log/restic.log 2>&1"
-    user: root
+    - name: Deploy the Restic backup script
+      ansible.builtin.template:
+        src: backup.sh.j2
+        dest: /opt/scripts/backup.sh
+        mode: '0700'
+
+    - name: Deploy the Restic restore script
+      ansible.builtin.template:
+        src: restore.sh.j2
+        dest: /opt/scripts/restore.sh
+        mode: '0700'
+
+    - name: Deploy the Restic verification script
+      ansible.builtin.template:
+        src: check.sh.j2
+        dest: /opt/scripts/check.sh
+        mode: '0700'
+
+    - name: Schedule the daily Restic backup via cron
+      ansible.builtin.cron:
+        name: "Daily Restic Backup"
+        minute: "0"
+        hour: "4"
+        job: "/bin/bash /opt/scripts/backup.sh >> /var/log/restic.log 2>&1"
+        user: root
+
+    - name: Schedule the weekly backup verification via cron
+      ansible.builtin.cron:
+        name: "Weekly Restic Check"
+        minute: "0"
+        hour: "5"
+        weekday: "0"
+        job: "/bin/bash /opt/scripts/check.sh >> /var/log/restic.log 2>&1"
+        user: root
