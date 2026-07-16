@@ -107,7 +107,7 @@
     fstype: fuse.mergerfs
     # requires-mounts-for makes MergerFS mount only after the data disks are mounted (prevents an empty pool after reboot)
     opts: >-
-      cache.files=partial,dropcacheonclose=true,category.create=epmfs,{{
+      fsname=mergerfs,cache.files=partial,dropcacheonclose=true,category.create=epmfs,{{
       data_disks | map(attribute='path') | map('regex_replace', '^', 'x-systemd.requires-mounts-for=') | join(',') }}
     state: mounted
 

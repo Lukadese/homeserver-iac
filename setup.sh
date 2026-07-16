@@ -89,7 +89,7 @@ echo "FACT_DRI=$([ -e /dev/dri ] && echo yes || echo no)"
 echo "---DISKS---"
 lsblk -P -o NAME,SIZE,FSTYPE,UUID,MOUNTPOINT,TYPE
 EOS
-)" || die "Could not connect to $TARGET over SSH."
+)" || die "Could not connect to $TARGET over SSH. Key-based login must work first — run 'ssh-copy-id $TARGET' (or add your public key to ~/.ssh/authorized_keys on the server) and try again."
 
 FACT_TZ="$(sed -n 's/^FACT_TZ=//p' <<<"$FACTS")"
 FACT_PUID="$(sed -n 's/^FACT_PUID=//p' <<<"$FACTS")"
