@@ -2,6 +2,10 @@
 - name: Deploy the Lean Mean Media Machine
   hosts: homeservers
   become: true
+  # group_vars/ only auto-loads files named after a group, so the vault must
+  # be loaded explicitly (found by the first real end-to-end deploy!)
+  vars_files:
+    - inventory/group_vars/vault.yml
   roles:
     - base
     - role: snapraid
