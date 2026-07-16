@@ -41,7 +41,8 @@ Everything — the OS, disks, networking, containers and backups — is describe
 - **Rehearsable disaster recovery** — a generated restore script with a `--test` mode, so you can practice a full recovery without touching your live data.
 - **Remote access via Tailscale** — reach every service securely over your own private WireGuard mesh network, no port forwarding required.
 - **Firewall out of the box** — UFW is enabled with a sane default: SSH is allowed (rate-limited), the LAN and Tailscale are trusted, everything else inbound is denied.
-- **Zero-touch OS maintenance** — automatic security updates via `unattended-upgrades` and Docker log rotation, so the server keeps itself healthy between deploys.
+- **Zero-touch OS maintenance** — automatic security updates via `unattended-upgrades` (including the reboot kernel patches need, scheduled after the backup window), Docker log rotation and log cleanup, so the server keeps itself healthy between deploys.
+- **A watchdog that emails you before things break** — a daily check of disk space, disk health (SMART) and container state, reporting to a free healthchecks.io check. A dying disk becomes an alert, not a surprise.
 
 ---
 
@@ -159,7 +160,7 @@ cd <your-copy>
 
 - List your disks under `data_disks` — one entry per disk, whether you have one or ten (run `sudo blkid` on the server to find the UUIDs).
 - Configure backups: point `backup_usb` at your USB drive, **or** set `restic_repository` to a remote target (SFTP/S3/B2), **or** set `backup_enabled: false` to skip backups.
-- *(Recommended)* paste a free [healthchecks.io](https://healthchecks.io) ping URL into `backup_healthcheck_url` so you get an email when backups stop working.
+- *(Recommended)* paste a free [healthchecks.io](https://healthchecks.io) ping URL into `backup_healthcheck_url` so you get an email when backups stop working — and a second one into `system_healthcheck_url` for the daily watchdog (disk space, disk health, containers).
 - Set `lan_subnet` to your home network's subnet (e.g. `192.168.1.0/24`). **This matters:** it's what lets you reach the WebUIs from your LAN and keeps SSH open through the firewall.
 - Configure the VPN in `gluetun_env` — the default block is OpenVPN; a WireGuard example is included. Any [Gluetun-supported provider/protocol](https://github.com/qdm12/gluetun-wiki) works.
 - Pick your optional services in `compose_profiles` (`iptv` = Dispatcharr, `management` = Portainer, `logs` = Dozzle).

@@ -79,6 +79,21 @@ backup_usb:
 # Leave empty to disable.
 backup_healthcheck_url: ""
 
+# --- System watchdog & maintenance ---
+# A daily watchdog checks disk space, disk health (SMART) and container
+# state. Give it its own ping URL (a second free healthchecks.io check) to
+# get alerted; leave empty to only log to /var/log/watchdog.log.
+system_healthcheck_url: ""
+
+# Alert when any filesystem is fuller than this percentage.
+disk_usage_threshold: 90
+
+# Reboot automatically when an update requires it (e.g. kernel security
+# patches — without a reboot they never take effect). Scheduled after the
+# nightly backup window. Set to false to handle reboots yourself.
+auto_reboot: true
+auto_reboot_time: "05:30"
+
 # Secrets pulled from the Ansible Vault
 tailscale_key: "{{ vault_tailscale_key }}"
 restic_pass: "{{ vault_restic_password }}"

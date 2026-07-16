@@ -6,7 +6,7 @@
 
 - name: Install base software
   ansible.builtin.apt:
-    name: [curl, git, mergerfs, restic, ufw, unattended-upgrades]
+    name: [curl, git, mergerfs, restic, ufw, unattended-upgrades, smartmontools]
     state: present
 
 # Security patches install themselves; everything else stays under Git control
@@ -17,6 +17,22 @@
       APT::Periodic::Update-Package-Lists "1";
       APT::Periodic::Unattended-Upgrade "1";
     mode: '0644'
+
+# Kernel security patches only take effect after a reboot
+- name: Enable automatic reboot when updates require it
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/52unattended-upgrades-reboot
+    content: |
+      Unattended-Upgrade::Automatic-Reboot "true";
+      Unattended-Upgrade::Automatic-Reboot-Time "{{ auto_reboot_time }}";
+    mode: '0644'
+  when: auto_reboot | bool
+
+- name: Remove automatic reboot configuration when disabled
+  ansible.builtin.file:
+    path: /etc/apt/apt.conf.d/52unattended-upgrades-reboot
+    state: absent
+  when: not auto_reboot | bool
 
 - name: Download Tailscale install script
   ansible.builtin.get_url:
@@ -95,6 +111,39 @@
       data_disks | map(attribute='path') | map('regex_replace', '^', 'x-systemd.requires-mounts-for=') | join(',') }}
     state: mounted
 
+- name: Create the scripts directory
+  ansible.builtin.file:
+    path: /opt/scripts
+    state: directory
+    mode: '0755'
+
+- name: Deploy the system watchdog script
+  ansible.builtin.template:
+    src: watchdog.sh.j2
+    dest: /opt/scripts/watchdog.sh
+    mode: '0700'
+
+- name: Schedule the daily system watchdog via cron
+  ansible.builtin.cron:
+    name: "Daily System Watchdog"
+    minute: "0"
+    hour: "7"
+    job: "/bin/bash /opt/scripts/watchdog.sh >> /var/log/watchdog.log 2>&1"
+    user: root
+
+- name: Rotate the homeserver log files
+  ansible.builtin.copy:
+    dest: /etc/logrotate.d/homeserver
+    content: |
+      /var/log/restic.log /var/log/watchdog.log {
+          weekly
+          rotate 4
+          compress
+          missingok
+          notifempty
+      }
+    mode: '0644'
+
 - name: Configure backups
   when: backup_enabled | bool
   block:
@@ -113,12 +162,6 @@
         opts: defaults,nofail
         state: mounted
       when: backup_usb is defined
-
-    - name: Create the scripts directory
-      ansible.builtin.file:
-        path: /opt/scripts
-        state: directory
-        mode: '0755'
 
     - name: Deploy the Restic backup script
       ansible.builtin.template:
