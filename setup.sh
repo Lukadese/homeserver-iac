@@ -254,9 +254,9 @@ EOF
 info "Wrote $HOSTS_FILE"
 
 if [[ "$VPN_TYPE" == "wireguard" ]]; then
-  GLUETUN_YAML="gluetun_env:\n  VPN_SERVICE_PROVIDER: \"{{ vault_vpn_provider }}\"\n  VPN_TYPE: \"wireguard\"\n  WIREGUARD_PRIVATE_KEY: \"{{ vault_wireguard_private_key }}\"\n  WIREGUARD_ADDRESSES: \"{{ vault_wireguard_addresses }}\"\n"
+  GLUETUN_YAML="gluetun_env:\n  VPN_SERVICE_PROVIDER: \"{{ vault_vpn_provider }}\"\n  VPN_TYPE: \"wireguard\"\n  WIREGUARD_PRIVATE_KEY: \"{{ vault_wireguard_private_key }}\"\n  WIREGUARD_ADDRESSES: \"{{ vault_wireguard_addresses }}\"\n  UPDATER_PERIOD: \"24h\"\n"
 else
-  GLUETUN_YAML="gluetun_env:\n  VPN_SERVICE_PROVIDER: \"{{ vault_vpn_provider }}\"\n  OPENVPN_USER: \"{{ vault_vpn_user }}\"\n  OPENVPN_PASSWORD: \"{{ vault_vpn_password }}\"\n"
+  GLUETUN_YAML="gluetun_env:\n  VPN_SERVICE_PROVIDER: \"{{ vault_vpn_provider }}\"\n  OPENVPN_USER: \"{{ vault_vpn_user }}\"\n  OPENVPN_PASSWORD: \"{{ vault_vpn_password }}\"\n  UPDATER_PERIOD: \"24h\"\n"
 fi
 
 backup_file "$ALL_FILE"

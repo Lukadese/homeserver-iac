@@ -134,6 +134,8 @@ Ansible now takes care of everything:
 
 When it finishes, the infrastructure is done — continue with Step 8 to wire the apps together.
 
+> ⚠️ **Do this now, or lose remote access in ~6 months:** Tailscale node keys **expire after 180 days** by default, after which the server silently drops off your tailnet. Open the [Tailscale admin console](https://login.tailscale.com/admin/machines), click the **⋯** menu next to your server and choose **Disable key expiry**. One click, and remote access keeps working for years.
+
 ### Step 8: Wire up the apps (one-time, ~30 minutes)
 
 Everything is running, but the apps don't know each other yet. Walk through these once, in this order — afterwards the whole pipeline (request → download → library) is fully automatic. Replace `<server>` with your server's IP.
@@ -145,6 +147,7 @@ Everything is running, but the apps don't know each other yet. Walk through thes
 - ⚠️ **The login password is hidden in the container logs.** The LinuxServer image generates a temporary password on first start. Find it in Dozzle (`http://<server>:8888`, click the `qbittorrent` container) or on the server with `docker logs qbittorrent`. Log in as `admin` with that password.
 - Set a permanent password: gear icon → **Options → WebUI → Authentication**.
 - Set the download location: **Options → Downloads → Default Save Path** = `/data/torrents`. *This path is what makes instant hardlinks (and no double disk usage) work — don't skip it.*
+- ⚠️ **Set seeding limits, or your disks fill up over time.** Without limits, every torrent seeds forever and `/data/torrents` grows until the pool is full. Go to **Options → BitTorrent → Seeding Limits** and set a ratio (e.g. `2`, or whatever your trackers require) with the action **Stop torrent**. Thanks to hardlinks, your media library keeps every file even after the torrent data is cleaned up.
 
 **2. Prowlarr — `http://<server>:9696`** *(your indexer manager)*
 

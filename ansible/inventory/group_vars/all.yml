@@ -25,12 +25,16 @@ gluetun_env:
   VPN_SERVICE_PROVIDER: "{{ vault_vpn_provider }}"
   OPENVPN_USER: "{{ vault_vpn_user }}"
   OPENVPN_PASSWORD: "{{ vault_vpn_password }}"
+  # Refresh the VPN server list daily — without this, endpoints slowly go
+  # stale between deploys and the VPN eventually fails to connect.
+  UPDATER_PERIOD: "24h"
 # WireGuard example (replace the block above):
 # gluetun_env:
 #   VPN_SERVICE_PROVIDER: "{{ vault_vpn_provider }}"
 #   VPN_TYPE: "wireguard"
 #   WIREGUARD_PRIVATE_KEY: "{{ vault_wireguard_private_key }}"
 #   WIREGUARD_ADDRESSES: "{{ vault_wireguard_addresses }}"
+#   UPDATER_PERIOD: "24h"
 
 # --- Storage ---
 # The data disks that make up the MergerFS pool at /mnt/storage.
