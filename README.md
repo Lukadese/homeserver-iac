@@ -34,7 +34,7 @@ Everything — the OS, disks, networking, containers and backups — is describe
 ## What you get
 
 - **100% GitOps & IaC** — the complete server configuration (OS, disks, network, containers, backups) lives in Ansible playbooks. Change it in Git, deploy it centrally.
-- **Intel QuickSync hardware transcoding** — full hardware H.265/HEVC transcoding via the `/dev/dri` GPU mapping in Jellyfin, so the CPU stays cool and idle.
+- **Intel QuickSync hardware transcoding** — full hardware H.265/HEVC transcoding via the `/dev/dri` GPU mapping in Jellyfin, so the CPU stays cool and idle. Auto-detected by the wizard and toggleable (`hw_transcoding`), so the stack also runs on VMs and machines without an Intel iGPU.
 - **Storage pooling with MergerFS** — any number of data disks (one or many) is transparently combined into one virtual pool at `/mnt/storage`, without RAID overhead. Add a disk by adding one entry to a list.
 - **Optional SnapRAID parity** — dedicate one disk as parity and a failed data disk can be *rebuilt* instead of re-downloaded, with a daily sync + scrub guarding against silent bit rot. One list in `all.yml` turns it on.
 - **TRaSH Guides-compliant layout** — a single shared `data` mount enables instant **hardlinks (atomic moves)** between qBittorrent and Radarr/Sonarr, avoiding a second copy and unnecessary disk wear.

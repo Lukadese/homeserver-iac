@@ -31,8 +31,17 @@
     dest: "{{ appdata_dir }}/docker-compose.yml"
     mode: '0644'
 
+- name: Copy the hardware-acceleration overlay to the server
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../compose/hwaccel.yml"
+    dest: "{{ appdata_dir }}/hwaccel.yml"
+    mode: '0644'
+
 - name: Bring up the full media stack
   community.docker.docker_compose_v2:
     project_src: "{{ appdata_dir }}"
+    # The hwaccel overlay maps /dev/dri and is only applied when the machine
+    # actually has an Intel iGPU (hw_transcoding)
+    files: "{{ ['docker-compose.yml', 'hwaccel.yml'] if hw_transcoding | bool else ['docker-compose.yml'] }}"
     state: present
     pull: always
