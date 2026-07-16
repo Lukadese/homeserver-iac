@@ -1,55 +1,55 @@
 ---
-- name: Systeem updates uitvoeren
+- name: Apply system updates
   ansible.builtin.apt:
     update_cache: true
     upgrade: safe
 
-- name: Basis software installeren
+- name: Install base software
   ansible.builtin.apt:
     name: [curl, git, mergerfs, restic, ufw]
     state: present
 
-- name: Tailscale installatiescript downloaden
+- name: Download Tailscale install script
   ansible.builtin.get_url:
     url: https://tailscale.com/install.sh
     dest: /tmp/install-tailscale.sh
     mode: '0700'
 
-- name: Tailscale VPN installeren via script
+- name: Install Tailscale VPN via script
   ansible.builtin.command: /tmp/install-tailscale.sh
   args:
     creates: /usr/bin/tailscale
 
-- name: Tailscale activeren
+- name: Bring Tailscale up
   ansible.builtin.command: tailscale up --authkey={{ tailscale_key }}
   register: base_ts_out
   changed_when: "'already running' not in base_ts_out.stdout"
   no_log: true
 
-- name: UFW - SSH toestaan (rate-limited, voorkomt buitensluiten)
+- name: UFW - allow SSH (rate-limited to avoid lockout)
   community.general.ufw:
     rule: limit
     port: '22'
     proto: tcp
 
-- name: UFW - volledige toegang via Tailscale-interface
+- name: UFW - trust the Tailscale interface fully
   community.general.ufw:
     rule: allow
     interface: tailscale0
     direction: in
 
-- name: UFW - toegang toestaan vanaf lokaal netwerk
+- name: UFW - allow access from the local network
   community.general.ufw:
     rule: allow
     src: "{{ lan_subnet }}"
 
-- name: UFW - standaardbeleid instellen en firewall activeren
+- name: UFW - set default policy and enable the firewall
   community.general.ufw:
     state: enabled
     policy: deny
     direction: incoming
 
-- name: Mappen maken voor data schijven
+- name: Create mount points for the data disks
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -61,13 +61,13 @@
     - "/mnt/disk2"
     - "{{ storage_merged }}"
 
-- name: Map maken voor USB backup
+- name: Create mount point for the USB backup drive
   ansible.builtin.file:
     path: "{{ backup_usb.path }}"
     state: directory
     mode: '0755'
 
-- name: USB Backup Stick permanent koppelen (nofail voorkomt boot issues)
+- name: Mount the USB backup drive permanently (nofail avoids boot issues)
   ansible.posix.mount:
     path: "{{ backup_usb.path }}"
     src: "{{ backup_usb.id }}"
@@ -75,7 +75,7 @@
     opts: defaults,nofail
     state: mounted
 
-- name: Data schijven koppelen
+- name: Mount the data disks
   ansible.posix.mount:
     path: "{{ item.path }}"
     src: "{{ item.id }}"
@@ -84,38 +84,38 @@
     state: mounted
   loop: "{{ data_disks }}"
 
-- name: MergerFS virtuele map configureren
+- name: Configure the MergerFS pool
   ansible.posix.mount:
     path: "{{ storage_merged }}"
     src: "/mnt/disk*"
     fstype: fuse.mergerfs
-    # requires-mounts-for zorgt dat MergerFS pas mount nadat de data-schijven gemount zijn (voorkomt lege pool na reboot)
+    # requires-mounts-for makes MergerFS mount only after the data disks are mounted (prevents an empty pool after reboot)
     opts: >-
       cache.files=partial,dropcacheonclose=true,category.create=epmfs,{{
       data_disks | map(attribute='path') | map('regex_replace', '^', 'x-systemd.requires-mounts-for=') | join(',') }}
     state: mounted
 
-- name: Scripts directory maken
+- name: Create the scripts directory
   ansible.builtin.file:
     path: /opt/scripts
     state: directory
     mode: '0755'
 
-- name: Restic backup script plaatsen
+- name: Deploy the Restic backup script
   ansible.builtin.template:
     src: backup.sh.j2
     dest: /opt/scripts/backup.sh
     mode: '0700'
 
-- name: Restic restore script plaatsen
+- name: Deploy the Restic restore script
   ansible.builtin.template:
     src: restore.sh.j2
     dest: /opt/scripts/restore.sh
     mode: '0700'
 
-- name: Cronjob toevoegen voor Restic backup
+- name: Schedule the daily Restic backup via cron
   ansible.builtin.cron:
-    name: "Dagelijkse Restic Backup"
+    name: "Daily Restic Backup"
     minute: "0"
     hour: "4"
     job: "/bin/bash /opt/scripts/backup.sh >> /var/log/restic.log 2>&1"

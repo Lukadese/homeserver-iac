@@ -5,11 +5,11 @@ pgid: "1000"
 appdata_dir: "/opt/appdata"
 storage_merged: "/mnt/storage"
 
-# Lokaal subnet zodat Gluetun toegang tot de WebUIs vanaf je LAN toelaat.
-# Pas dit aan naar het subnet van jouw thuisnetwerk.
+# Local subnet so Gluetun allows access to the WebUIs from your LAN.
+# Change this to match your home network's subnet.
 lan_subnet: "192.168.1.0/24"
 
-# Vraag deze UUIDs op via 'blkid' in de terminal
+# Look these UUIDs up with 'blkid' in the terminal
 data_disks:
   - id: "UUID=1111-2222-3333-4444"
     path: "/mnt/disk1"
@@ -20,7 +20,7 @@ backup_usb:
   id: "UUID=9999-AAAA-BBBB-CCCC"
   path: "/mnt/usb-backup"
 
-# Secrets geëxtraheerd uit de Ansible Vault
+# Secrets pulled from the Ansible Vault
 vpn_provider: "{{ vault_vpn_provider }}"
 vpn_user: "{{ vault_vpn_user }}"
 vpn_pass: "{{ vault_vpn_password }}"

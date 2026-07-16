@@ -1,23 +1,23 @@
 ---
-- name: Vereiste packages voor Docker repo installeren
+- name: Install prerequisite packages for the Docker repo
   ansible.builtin.apt:
     name: [ca-certificates, curl, gnupg]
     state: present
     update_cache: true
 
-- name: Keyring directory aanmaken
+- name: Create the keyring directory
   ansible.builtin.file:
     path: /etc/apt/keyrings
     state: directory
     mode: '0755'
 
-- name: Docker GPG sleutel toevoegen (keyring methode)
+- name: Add the Docker GPG key (keyring method)
   ansible.builtin.get_url:
     url: https://download.docker.com/linux/debian/gpg
     dest: /etc/apt/keyrings/docker.asc
     mode: '0644'
 
-- name: Docker repository toevoegen
+- name: Add the Docker repository
   ansible.builtin.apt_repository:
     repo: >-
       deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}
@@ -26,13 +26,13 @@
     filename: docker
     state: present
 
-- name: Docker CE en Compose installeren
+- name: Install Docker CE and the Compose plugin
   ansible.builtin.apt:
     name: [docker-ce, docker-ce-cli, containerd.io, docker-compose-plugin]
     state: present
     update_cache: true
 
-- name: Docker service starten en inschakelen
+- name: Start and enable the Docker service
   ansible.builtin.service:
     name: docker
     state: started

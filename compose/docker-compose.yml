@@ -1,5 +1,5 @@
 services:
-  # Netwerk & Veiligheid
+  # Network & Security
   gluetun:
     image: qmcgaw/gluetun:latest
     container_name: gluetun
@@ -9,14 +9,14 @@ services:
       - VPN_SERVICE_PROVIDER=${VPN_PROVIDER}
       - OPENVPN_USER=${VPN_USER}
       - OPENVPN_PASSWORD=${VPN_PASS}
-      # Sta verkeer naar het lokale netwerk toe, anders zijn de WebUIs onbereikbaar vanaf je LAN
+      # Allow traffic to the local network, otherwise the WebUIs are unreachable from your LAN
       - FIREWALL_OUTBOUND_SUBNETS=${LAN_SUBNET}
     ports:
       - 8080:8080 # qBittorrent
       - 8000:8000 # Dispatcharr
     restart: unless-stopped
 
-  # Lichtgewicht Monitoring
+  # Lightweight monitoring
   dozzle:
     image: amir20/dozzle:latest
     container_name: dozzle
@@ -33,7 +33,7 @@ services:
     ports: ["9443:9443"]
     restart: unless-stopped
 
-  # Download & IPTV via VPN
+  # Downloaders & IPTV routed through the VPN
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
@@ -66,7 +66,7 @@ services:
       - ${APPDATA_DIR}/dispatcharr:/config
     restart: unless-stopped
 
-  # Media & Automatisering
+  # Media & automation
   jellyfin:
     image: lscr.io/linuxserver/jellyfin:latest
     container_name: jellyfin
@@ -80,7 +80,7 @@ services:
       - ${STORAGE_DIR}/data/media:/data/media
     devices:
       - /dev/dri:/dev/dri # Intel QuickSync
-    # Nodig zodat de PUID-gebruiker toegang heeft tot /dev/dri (anders valt transcoding terug op CPU)
+    # Required so the PUID user can access /dev/dri (otherwise transcoding falls back to the CPU)
     group_add:
       - "render"
       - "video"
