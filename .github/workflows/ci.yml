@@ -10,6 +10,6 @@ jobs:
       - name: Install Ansible Lint
         run: pip install ansible-lint
       - name: Install vereiste Ansible Collections
-        run: ansible-galaxy collection install ansible.posix community.docker
+        run: ansible-galaxy collection install ansible.posix community.docker community.general
       - name: Lint Playbooks
         run: ansible-lint ansible/site.yml
