@@ -65,6 +65,8 @@ Either way, finish with **[Step 8: Wire up the apps](#step-8-wire-up-the-apps-on
 
    **Backup monitoring (strongly recommended)** — create a free check at [healthchecks.io](https://healthchecks.io) and paste its ping URL into `backup_healthcheck_url`. You'll get an email whenever backups stop running. Without this, a broken backup goes unnoticed until the day you need it.
 
+   **System watchdog (strongly recommended)** — create a *second* healthchecks.io check and paste its URL into `system_healthcheck_url`. A daily watchdog then reports disk space, disk health (SMART) and container state — so a filling pool or a dying disk becomes an email instead of an outage. The related `auto_reboot` setting (default on) reboots the server at 05:30 when a kernel update requires it.
+
    **Network** — set `lan_subnet` to your home network's subnet (e.g. `192.168.1.0/24`). This controls which network the firewall trusts and which subnet Gluetun allows to reach the WebUIs — get it wrong and the WebUIs will be unreachable from your LAN.
 
    **VPN** — the `gluetun_env` dict is passed 1:1 to the Gluetun container, so any provider/protocol from the [Gluetun wiki](https://github.com/qdm12/gluetun-wiki) works. The default block is OpenVPN (username/password); a commented WireGuard example (private key) is right below it.
@@ -125,7 +127,8 @@ ansible-playbook -i inventory/hosts.yml site.yml --vault-password-file ../.vault
 
 Ansible now takes care of everything:
 
-- Installing system updates and base packages, plus automatic security updates (`unattended-upgrades`).
+- Installing system updates and base packages, plus automatic security updates (`unattended-upgrades`) with an automatic reboot when a kernel patch requires it.
+- Installing the daily system watchdog (disk space, SMART disk health, container state) and log rotation for the script logs.
 - Mounting the disk(s) and configuring MergerFS at `/mnt/storage`.
 - Installing and activating Tailscale (first run only — redeploys skip it).
 - Enabling the UFW firewall (SSH allowed, LAN and Tailscale trusted, everything else denied).

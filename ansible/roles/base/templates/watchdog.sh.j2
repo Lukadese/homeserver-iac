@@ -1,0 +1,54 @@
+#!/bin/bash
+# Daily system watchdog: disk space, disk health (SMART) and container state.
+# Pings the monitoring URL on success, or its /fail endpoint with details on
+# problems — so a dying disk or crashed container becomes an email, not a
+# surprise months later.
+set -u
+
+FAILURES=""
+add_failure() { FAILURES="${FAILURES}${1}\n"; }
+
+# --- 1. Disk usage ------------------------------------------------------------
+while read -r mount pcent; do
+    usage="${pcent%\%}"
+    if [ "$usage" -ge {{ disk_usage_threshold }} ]; then
+        add_failure "Disk usage on $mount is ${usage}% (threshold {{ disk_usage_threshold }}%)"
+    fi
+done < <(df --output=target,pcent -x tmpfs -x devtmpfs -x overlay -x squashfs 2>/dev/null | tail -n +2)
+
+# --- 2. SMART health ----------------------------------------------------------
+# Only alert on an explicit FAILED verdict: USB bridges often can't expose
+# SMART at all, and that shouldn't page anyone.
+if command -v smartctl >/dev/null 2>&1; then
+    while read -r dev _; do
+        if smartctl -H "$dev" 2>/dev/null | grep -q "FAILED"; then
+            add_failure "SMART reports FAILING health for $dev — replace this disk soon"
+        fi
+    done < <(smartctl --scan | awk '{print $1}')
+fi
+
+# --- 3. Containers ------------------------------------------------------------
+if [ -f "{{ appdata_dir }}/docker-compose.yml" ]; then
+    for state in restarting exited dead; do
+        while read -r svc; do
+            [ -n "$svc" ] && add_failure "Container '$svc' is $state"
+        done < <(docker compose --project-directory "{{ appdata_dir }}" ps --status "$state" --services 2>/dev/null || true)
+    done
+    while read -r name; do
+        [ -n "$name" ] && add_failure "Container '$name' is unhealthy"
+    done < <(docker ps --filter "health=unhealthy" --format '{% raw %}{{.Names}}{% endraw %}' 2>/dev/null || true)
+fi
+
+# --- Report -------------------------------------------------------------------
+if [ -n "$FAILURES" ]; then
+    printf 'WATCHDOG FAILURES:\n%b' "$FAILURES"
+{% if system_healthcheck_url %}
+    curl -fsS -m 10 --retry 3 --data-raw "$(printf '%b' "$FAILURES")" "{{ system_healthcheck_url }}/fail" > /dev/null || true
+{% endif %}
+    exit 1
+else
+    echo "All checks passed."
+{% if system_healthcheck_url %}
+    curl -fsS -m 10 --retry 3 "{{ system_healthcheck_url }}" > /dev/null || true
+{% endif %}
+fi

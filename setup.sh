@@ -185,6 +185,11 @@ SUBNET_SUGGESTION="${SERVER_IP%.*}.0/24"
 ask "Your LAN subnet" "$SUBNET_SUGGESTION"
 LAN_SUBNET="$REPLY"
 
+echo "A daily watchdog checks disk space, disk health (SMART) and containers."
+echo "Give it its own healthchecks.io ping URL (separate from the backup one)"
+echo "to get alerted when something needs attention."
+read -r -p "System watchdog ping URL (leave empty to skip): " WATCHDOG_URL
+
 PROFILES=()
 ask_yn "Enable IPTV (Dispatcharr)?" "n" && PROFILES+=("iptv")
 ask_yn "Enable Portainer (container management UI)?" "y" && PROFILES+=("management")
@@ -304,6 +309,15 @@ EOF
 cat <<EOF
 # Pinged after every successful backup — leave empty to disable monitoring.
 backup_healthcheck_url: "$HEALTHCHECK_URL"
+
+# --- System watchdog & maintenance ---
+# Daily check of disk space, disk health (SMART) and container state.
+system_healthcheck_url: "$WATCHDOG_URL"
+disk_usage_threshold: 90
+
+# Reboot automatically when an update requires it (after the backup window).
+auto_reboot: true
+auto_reboot_time: "05:30"
 
 # Secrets pulled from the Ansible Vault
 tailscale_key: "{{ vault_tailscale_key }}"
