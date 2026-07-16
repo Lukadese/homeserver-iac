@@ -9,6 +9,8 @@ services:
       - VPN_SERVICE_PROVIDER=${VPN_PROVIDER}
       - OPENVPN_USER=${VPN_USER}
       - OPENVPN_PASSWORD=${VPN_PASS}
+      # Sta verkeer naar het lokale netwerk toe, anders zijn de WebUIs onbereikbaar vanaf je LAN
+      - FIREWALL_OUTBOUND_SUBNETS=${LAN_SUBNET}
     ports:
       - 8080:8080 # qBittorrent
       - 8000:8000 # Dispatcharr
@@ -72,6 +74,10 @@ services:
       - ${STORAGE_DIR}/data/media:/data/media
     devices:
       - /dev/dri:/dev/dri # Intel QuickSync
+    # Nodig zodat de PUID-gebruiker toegang heeft tot /dev/dri (anders valt transcoding terug op CPU)
+    group_add:
+      - "render"
+      - "video"
     restart: unless-stopped
 
   radarr:

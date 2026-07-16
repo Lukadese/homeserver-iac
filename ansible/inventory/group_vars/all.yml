@@ -5,6 +5,10 @@ pgid: "1000"
 appdata_dir: "/opt/appdata"
 storage_merged: "/mnt/storage"
 
+# Lokaal subnet zodat Gluetun toegang tot de WebUIs vanaf je LAN toelaat.
+# Pas dit aan naar het subnet van jouw thuisnetwerk.
+lan_subnet: "192.168.1.0/24"
+
 # Vraag deze UUIDs op via 'blkid' in de terminal
 data_disks:
   - id: "UUID=1111-2222-3333-4444"
