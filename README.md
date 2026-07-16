@@ -8,6 +8,8 @@ A GitOps-based Infrastructure-as-Code setup for a fully automated, power-efficie
 
 Everything — the OS, disks, networking, containers and backups — is described in Ansible. You make changes in Git and roll them out with a single command. No manual clicking on the server.
 
+The full pipeline — setup wizard, deploy, VPN kill switch, backup, restore rehearsal and watchdog — has been **tested end-to-end** on a fresh machine.
+
 ---
 
 ## Table of Contents
@@ -114,7 +116,7 @@ Both `torrents/` and `media/` live under the **same** `data/` mount. That shared
 
 **On the server (the machine that runs everything):**
 
-- A clean **Debian** (or Ubuntu Server) install on your Intel N100 box.
+- A clean **Debian** (or Ubuntu Server) install on your Intel N100 box, with **at least 30 GB of OS disk space** — the container images alone take ~8 GB.
 - SSH access, and a user with `sudo` rights.
 - **One or more data disks**, physically attached and formatted (ext4 by default; other filesystems are configurable per disk).
 - *(Optional)* a USB backup drive — or credentials for a remote backup target (SFTP/S3/B2). You can also run without backups entirely.

@@ -20,10 +20,12 @@ Either way, finish with **[Step 8: Wire up the apps](#step-8-wire-up-the-apps-on
 
 ### Step 1: OS & network
 
-1. Install a clean copy of **Debian** (or Ubuntu Server) on the server.
+1. Install a clean copy of **Debian** (or Ubuntu Server) on the server, with **at least 30 GB of OS disk space** — the container images alone take ~8 GB, and a full OS disk corrupts databases.
 2. Make sure SSH access works and that your user has `sudo` rights.
 3. Physically attach your data disk(s) — one is enough, more is fine. Format them (ext4 recommended) if they aren't already.
 4. *(Optional)* attach a USB backup drive, or have credentials ready for a remote backup target (SFTP/S3/Backblaze B2).
+
+> **Testing on a VM or cloud instance?** That works too (`hw_transcoding` switches off automatically): give the boot disk 30 GB and attach a couple of small extra disks as data disks. Two cloud gotchas: on GCP the guest agent may remove manually added `authorized_keys` entries — add your public key via the instance's SSH-keys metadata instead. And without a home LAN, set `lan_subnet` to the Tailscale range `100.64.0.0/10` so you can reach the WebUIs over Tailscale.
 
 ### Step 2: Prepare your control machine (laptop)
 
@@ -71,7 +73,7 @@ Either way, finish with **[Step 8: Wire up the apps](#step-8-wire-up-the-apps-on
 
    **Network** — set `lan_subnet` to your home network's subnet (e.g. `192.168.1.0/24`). This controls which network the firewall trusts and which subnet Gluetun allows to reach the WebUIs — get it wrong and the WebUIs will be unreachable from your LAN.
 
-   **VPN** — the `gluetun_env` dict is passed 1:1 to the Gluetun container, so any provider/protocol from the [Gluetun wiki](https://github.com/qdm12/gluetun-wiki) works. The default block is OpenVPN (username/password); a commented WireGuard example (private key) is right below it.
+   **VPN** — the `gluetun_env` dict is passed 1:1 to the Gluetun container, so any provider/protocol from the [Gluetun wiki](https://github.com/qdm12/gluetun-wiki) works. The default block is OpenVPN (username/password); a commented WireGuard example (private key) is right below it. Using **ProtonVPN Free**? Add `FREE_ONLY: "on"` to the dict so Gluetun only selects free-tier servers — and use Proton's separate *OpenVPN credentials* from your account page, not your account password.
 
    **Optional services** — pick what you want in `compose_profiles`: `iptv` (Dispatcharr), `management` (Portainer), `logs` (Dozzle). Remove a profile and its container simply won't be deployed.
 
@@ -225,7 +227,7 @@ sudo /opt/scripts/check.sh
 sudo /opt/scripts/restore.sh --test
 
 # 3. Look around in /tmp/restore-test/opt/appdata — your configs should be there
-ls /tmp/restore-test/opt/appdata
+sudo ls /tmp/restore-test/opt/appdata   # sudo: restic restores with the original (root) ownership
 
 # 4. Clean up
 sudo rm -rf /tmp/restore-test

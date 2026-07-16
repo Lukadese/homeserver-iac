@@ -26,6 +26,9 @@ hw_transcoding: true
 # variable, so any provider/protocol from the Gluetun wiki works:
 # https://github.com/qdm12/gluetun-wiki
 # Keep the secret values in the vault.
+# ProtonVPN Free users: add   FREE_ONLY: "on"   so only free servers are used,
+# and note that Proton needs its separate OpenVPN credentials (found in your
+# Proton account), not your account password.
 gluetun_env:
   VPN_SERVICE_PROVIDER: "{{ vault_vpn_provider }}"
   OPENVPN_USER: "{{ vault_vpn_user }}"
