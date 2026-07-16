@@ -9,6 +9,29 @@ storage_merged: "/mnt/storage"
 # Change this to match your home network's subnet.
 lan_subnet: "192.168.1.0/24"
 
+# --- Services ---
+# Optional services to enable. Remove a profile to skip its container(s):
+#   iptv        -> Dispatcharr
+#   management  -> Portainer
+#   logs        -> Dozzle
+compose_profiles: [iptv, management, logs]
+
+# --- VPN (Gluetun) ---
+# Every key in this dict is passed to the Gluetun container as an environment
+# variable, so any provider/protocol from the Gluetun wiki works:
+# https://github.com/qdm12/gluetun-wiki
+# Keep the secret values in the vault.
+gluetun_env:
+  VPN_SERVICE_PROVIDER: "{{ vault_vpn_provider }}"
+  OPENVPN_USER: "{{ vault_vpn_user }}"
+  OPENVPN_PASSWORD: "{{ vault_vpn_password }}"
+# WireGuard example (replace the block above):
+# gluetun_env:
+#   VPN_SERVICE_PROVIDER: "{{ vault_vpn_provider }}"
+#   VPN_TYPE: "wireguard"
+#   WIREGUARD_PRIVATE_KEY: "{{ vault_wireguard_private_key }}"
+#   WIREGUARD_ADDRESSES: "{{ vault_wireguard_addresses }}"
+
 # --- Storage ---
 # The data disks that make up the MergerFS pool at /mnt/storage.
 # One entry per disk — works with a single disk or with many.
@@ -53,8 +76,5 @@ backup_usb:
 backup_healthcheck_url: ""
 
 # Secrets pulled from the Ansible Vault
-vpn_provider: "{{ vault_vpn_provider }}"
-vpn_user: "{{ vault_vpn_user }}"
-vpn_pass: "{{ vault_vpn_password }}"
 tailscale_key: "{{ vault_tailscale_key }}"
 restic_pass: "{{ vault_restic_password }}"

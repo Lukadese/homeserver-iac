@@ -6,7 +6,15 @@ This guide covers installing the homeserver from scratch (bootstrapping), verify
 
 ## 1. First-time install (bootstrap)
 
-Follow these steps to deploy the project on a brand-new server for the first time.
+### The fast path: the setup wizard
+
+After completing **Step 1** and **Step 2** below, you can skip every other step by running the interactive wizard from the repository root:
+
+```bash
+./setup.sh
+```
+
+It connects to your server, detects your disks/timezone/user IDs, walks you through backups, VPN (OpenVPN or WireGuard) and optional services, generates all configuration files including the encrypted vault, and offers to deploy immediately. The manual steps below configure exactly the same things by hand.
 
 ### Step 1: OS & network
 
@@ -57,6 +65,10 @@ Follow these steps to deploy the project on a brand-new server for the first tim
 
    **Network** — set `lan_subnet` to your home network's subnet (e.g. `192.168.1.0/24`). This controls which network the firewall trusts and which subnet Gluetun allows to reach the WebUIs — get it wrong and the WebUIs will be unreachable from your LAN.
 
+   **VPN** — the `gluetun_env` dict is passed 1:1 to the Gluetun container, so any provider/protocol from the [Gluetun wiki](https://github.com/qdm12/gluetun-wiki) works. The default block is OpenVPN (username/password); a commented WireGuard example (private key) is right below it.
+
+   **Optional services** — pick what you want in `compose_profiles`: `iptv` (Dispatcharr), `management` (Portainer), `logs` (Dozzle). Remove a profile and its container simply won't be deployed.
+
    Also adjust `timezone` and `puid`/`pgid` if needed.
 
 ### Step 5: Add your secrets to the Ansible Vault
@@ -67,7 +79,7 @@ The sensitive values (VPN, Tailscale, Restic) are stored in an encrypted vault f
 ansible-vault edit ansible/inventory/group_vars/vault.yml
 ```
 
-Make sure it defines all of these keys:
+Make sure it defines the keys your `gluetun_env` block references, plus Tailscale and Restic. For OpenVPN:
 
 ```yaml
 vault_vpn_provider: "your-provider"      # e.g. mullvad, protonvpn, nordvpn
@@ -75,6 +87,13 @@ vault_vpn_user: "your-vpn-username"
 vault_vpn_password: "your-vpn-password"
 vault_tailscale_key: "tskey-auth-xxxx"   # from https://login.tailscale.com/admin/settings/keys
 vault_restic_password: "a-strong-backup-password"
+```
+
+For WireGuard, replace `vault_vpn_user`/`vault_vpn_password` with:
+
+```yaml
+vault_wireguard_private_key: "your-wireguard-private-key"
+vault_wireguard_addresses: "10.64.222.21/32"   # from your provider's WireGuard config
 ```
 
 > If you are starting a brand-new vault, create it with `ansible-vault create ansible/inventory/group_vars/vault.yml` instead.

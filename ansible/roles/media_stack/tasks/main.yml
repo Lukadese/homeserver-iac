@@ -19,6 +19,12 @@
     dest: "{{ appdata_dir }}/.env"
     mode: '0600'
 
+- name: Generate the Gluetun VPN environment file
+  ansible.builtin.template:
+    src: gluetun.env.j2
+    dest: "{{ appdata_dir }}/gluetun.env"
+    mode: '0600'
+
 - name: Copy the Docker Compose file to the server
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/../compose/docker-compose.yml"
