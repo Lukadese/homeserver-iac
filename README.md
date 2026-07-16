@@ -25,6 +25,12 @@ GitOps-gebaseerde infrastructuur (Infrastructure as Code) voor een geautomatisee
 
 ---
 
+## 🔄 Versiebeheer van images
+
+Alle containers draaien bewust op de `:latest`-tag en worden bij elke deploy opgehaald (`pull: always`). Dit houdt de stack automatisch up-to-date en maximaal "plug & play". De tradeoff: een uitrol is niet 100% reproduceerbaar en een breaking image-update kan bij de volgende deploy iets omleggen. Wil je meer controle, dan kun je per service een concrete versie-tag pinnen in `compose/docker-compose.yml` en Restic gebruiken om terug te rollen bij problemen.
+
+---
+
 ## 📁 Storage & Data Layout
 
 De schijven worden via MergerFS samengevoegd. De mappenstructuur op `/mnt/storage` is als volgt ingericht voor optimale werking van de *arr-apps:
@@ -46,7 +52,7 @@ De schijven worden via MergerFS samengevoegd. De mappenstructuur op `/mnt/storag
 
 Voor het bootstrappen van een gloednieuwe server of het herstellen van een back-up na een crash, raadpleeg de gedetailleerde handleiding:
 
-👉 **[Installatie & Disaster Recovery Gids (BOOTSTRAP.md)](file:///c:/Users/Lukad/Documents/homeserver-iac/BOOTSTRAP.md)**
+👉 **[Installatie & Disaster Recovery Gids (BOOTSTRAP.md)](BOOTSTRAP.md)**
 
 ---
 

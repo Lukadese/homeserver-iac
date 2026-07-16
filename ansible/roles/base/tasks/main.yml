@@ -2,7 +2,7 @@
 - name: Systeem updates uitvoeren
   ansible.builtin.apt:
     update_cache: true
-    upgrade: dist
+    upgrade: safe
 
 - name: Basis software installeren
   ansible.builtin.apt:

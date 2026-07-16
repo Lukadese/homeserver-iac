@@ -30,8 +30,8 @@ Volg deze stappen om het project voor de eerste keer uit te rollen op een nieuwe
 3. Kopieer de UUID's van de data-schijven (bijv. `/dev/sdb1`, `/dev/sdc1`) en de USB-backupschijf.
 
 ### Stap 4: Configuratie bijwerken
-1. Open [ansible/inventory/hosts.yml](file:///c:/Users/Lukad/Documents/homeserver-iac/ansible/inventory/hosts.yml) op je laptop en pas het IP-adres (`ansible_host`) en de gebruikersnaam (`ansible_user`) aan.
-2. Open [ansible/inventory/group_vars/all.yml](file:///c:/Users/Lukad/Documents/homeserver-iac/ansible/inventory/group_vars/all.yml) en vervang de voorbeeld-UUID's bij `data_disks` en `backup_usb` door de echte UUID's van jouw schijven.
+1. Open [ansible/inventory/hosts.yml](ansible/inventory/hosts.yml) op je laptop en pas het IP-adres (`ansible_host`) en de gebruikersnaam (`ansible_user`) aan.
+2. Open [ansible/inventory/group_vars/all.yml](ansible/inventory/group_vars/all.yml) en vervang de voorbeeld-UUID's bij `data_disks` en `backup_usb` door de echte UUID's van jouw schijven. Pas hier ook `lan_subnet` aan naar het subnet van jouw thuisnetwerk.
 
 ### Stap 5: Ansible Vault wachtwoord instellen
 1. Zorg ervoor dat je het wachtwoord van de Ansible Vault bij de hand hebt.

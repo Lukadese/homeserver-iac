@@ -21,7 +21,7 @@
 
 - name: Docker Compose file naar server kopiëren
   ansible.builtin.copy:
-    src: ../../../../compose/docker-compose.yml
+    src: "{{ playbook_dir }}/../compose/docker-compose.yml"
     dest: "{{ appdata_dir }}/docker-compose.yml"
     mode: '0644'
 
