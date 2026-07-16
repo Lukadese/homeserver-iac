@@ -29,7 +29,7 @@ It connects to your server, detects your disks/timezone/user IDs, walks you thro
 2. Clone this repository:
    ```bash
    git clone <your-repo-url>
-   cd homeserver-iac
+   cd lean-mean-media-machine
    ```
 
 ### Step 3: Find your disk UUIDs
