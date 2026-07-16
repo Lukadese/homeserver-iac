@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Interactive setup wizard for the Lean & Mean Homeserver.
+# Interactive setup wizard for the Lean Mean Media Machine.
 #
 # Run this from the repository root on your control machine (Linux/macOS/WSL):
 #   ./setup.sh

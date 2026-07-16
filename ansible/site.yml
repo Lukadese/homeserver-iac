@@ -1,5 +1,5 @@
 ---
-- name: Deploy the Lean & Mean Homeserver
+- name: Deploy the Lean Mean Media Machine
   hosts: homeservers
   become: true
   roles:

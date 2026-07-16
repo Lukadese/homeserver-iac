@@ -1,6 +1,6 @@
-# Lean & Mean Homeserver (IaC)
+# Lean Mean Media Machine
 
-[![CI](https://github.com/Lukadese/homeserver-iac/actions/workflows/ci.yml/badge.svg)](https://github.com/Lukadese/homeserver-iac/actions/workflows/ci.yml)
+[![CI](https://github.com/Lukadese/lean-mean-media-machine/actions/workflows/ci.yml/badge.svg)](https://github.com/Lukadese/lean-mean-media-machine/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A GitOps-based Infrastructure-as-Code setup for a fully automated, power-efficient 4K media server. Built and tuned on a low-power **Intel N100** box (comfortably handles up to ~4 simultaneous 4K viewers), but generic enough for any Debian machine — one disk or many, with or without a backup drive.
