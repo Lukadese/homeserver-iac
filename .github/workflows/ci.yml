@@ -4,7 +4,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Test Docker Compose Syntax
         # --profile "*" also validates the optional profile-gated services
         run: docker compose -f compose/docker-compose.yml --profile "*" config -q
