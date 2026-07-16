@@ -185,6 +185,20 @@ Do this in both apps:
 
 **✅ Test the pipeline:** request a movie in Jellyseerr → Radarr grabs it via your Prowlarr indexers → qBittorrent downloads it to `/data/torrents` (through the VPN) → Radarr instantly hardlinks it into `/data/media/movies` → it appears in Jellyfin. If that works, you're done — everything from here on is automatic.
 
+### Optional: auto-download trending content (Top 10 lists)
+
+Radarr and Sonarr can automatically download whatever is trending on the big streaming services, using their built-in **Import Lists** — no extra software needed:
+
+1. Find a list that tracks what you want: [Trakt](https://trakt.tv) and [mdblist.com](https://mdblist.com) host community-maintained, daily-updated lists such as *"Netflix Top 10"* (per country), *"Trending on Disney+"*, *"HBO Max Top 10"*, and many more.
+2. In **Radarr → Settings → Import Lists → +**, add it (e.g. type *Trakt List*, or *Custom List* with the list URL). Set your quality profile, root folder `/data/media/movies`, and enable **Add & Monitor** + search on add.
+3. Repeat in **Sonarr** for series, with root folder `/data/media/tv`.
+
+From then on, anything that enters those charts shows up in Jellyfin automatically a few hours later.
+
+> ⚠️ **Mind your disk space.** Several services × top-10 movies *and* series in 4K adds up to many terabytes, and the lists refresh continuously. Start with one or two lists and a modest quality profile (1080p) — the watchdog warns you at 90% full, but better not to get there.
+
+> 💡 **Rotate instead of grow:** the *Clean Library Level* setting on each import list can automatically unmonitor (or even delete) items that drop off the chart, so your library mirrors the Top 10 instead of growing forever. Only use "Remove and Delete" if you're sure that's what you want.
+
 ---
 
 ## 2. Verify your backups (do this once!)

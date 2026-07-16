@@ -235,6 +235,8 @@ After the deploy everything is *running*, but the apps don't know each other yet
 
 **Pro tip — HEVC/x265 without transcoding:** once the apps are connected, import the TRaSH Guides Custom Formats for `HEVC/x265` in Radarr and Sonarr and give them a score of e.g. `+100`. Your download client then grabs compact, pre-compressed files that play directly on capable clients — so your N100 barely has to transcode at all.
 
+**Pro tip — auto-download trending content:** Radarr/Sonarr's built-in Import Lists can automatically grab whatever is in the Top 10 on Netflix, Disney+, HBO Max & co, and even rotate your library along with the charts — see [the guide in BOOTSTRAP.md](BOOTSTRAP.md#optional-auto-download-trending-content-top-10-lists).
+
 ---
 
 ## Backups & disaster recovery
