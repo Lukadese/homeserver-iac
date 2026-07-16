@@ -28,7 +28,9 @@ Everything — the OS, disks, networking, containers and backups — is describe
 - **Intel QuickSync hardware transcoding** — full hardware H.265/HEVC transcoding via the `/dev/dri` GPU mapping in Jellyfin, so the CPU stays cool and idle.
 - **Storage pooling with MergerFS** — any number of data disks (one or many) is transparently combined into one virtual pool at `/mnt/storage`, without RAID overhead. Add a disk by adding one entry to a list.
 - **TRaSH Guides-compliant layout** — a single shared `data` mount enables instant **hardlinks (atomic moves)** between qBittorrent and Radarr/Sonarr, avoiding a second copy and unnecessary disk wear.
-- **VPN kill switch via Gluetun** — qBittorrent and Dispatcharr route *all* their traffic through the Gluetun VPN container. If the VPN drops, Gluetun blocks all traffic instantly.
+- **VPN kill switch via Gluetun** — qBittorrent and Dispatcharr route *all* their traffic through the Gluetun VPN container. If the VPN drops, Gluetun blocks all traffic instantly. Works with **any Gluetun-supported provider, over OpenVPN or WireGuard**.
+- **Guided setup wizard** — `./setup.sh` detects your server's disks and settings over SSH and generates the entire configuration interactively, encrypted vault included.
+- **Modular services** — optional components (IPTV, Portainer, Dozzle) are toggled with a single `compose_profiles` list.
 - **Automated encrypted backups** — daily incremental, encrypted Restic backups of `/opt/appdata` to a USB drive **or any Restic backend** (SFTP, S3, Backblaze B2, ...), scheduled via cron. Weekly integrity checks and optional failure alerts via a free [healthchecks.io](https://healthchecks.io) ping. Backups can also be disabled entirely on machines without a backup target.
 - **Rehearsable disaster recovery** — a generated restore script with a `--test` mode, so you can practice a full recovery without touching your live data.
 - **Remote access via Tailscale** — reach every service securely over your own private WireGuard mesh network, no port forwarding required.
@@ -42,9 +44,11 @@ Everything — the OS, disks, networking, containers and backups — is describe
 | Category | Services |
 |----------|----------|
 | **Media & automation** | Jellyfin, Radarr, Sonarr, Prowlarr, Bazarr, Jellyseerr |
-| **Downloaders** | qBittorrent, Dispatcharr (IPTV) |
-| **Management & monitoring** | Portainer (container management), Dozzle (live log viewer) |
+| **Downloaders** | qBittorrent, Dispatcharr (IPTV, *optional*) |
+| **Management & monitoring** | Portainer (*optional*), Dozzle (live log viewer, *optional*) |
 | **Network & security** | Gluetun (VPN kill switch), Tailscale (mesh VPN), UFW (firewall) |
+
+Optional services are enabled or disabled with the `compose_profiles` list in `all.yml` — no compose editing needed.
 
 ---
 
@@ -111,14 +115,28 @@ Both `torrents/` and `media/` live under the **same** `data/` mount. That shared
 
 **Accounts / keys you'll need:**
 
-- Credentials for a [Gluetun-supported VPN provider](https://github.com/qdm12/gluetun-wiki).
+- Credentials for a [Gluetun-supported VPN provider](https://github.com/qdm12/gluetun-wiki) — OpenVPN (username/password) or WireGuard (private key) both work.
 - A [Tailscale auth key](https://login.tailscale.com/admin/settings/keys).
 
 ---
 
 ## Quick start
 
-> The steps below are the short version. For a fully detailed walkthrough — including how to find your disk UUIDs and full disaster recovery — see **[BOOTSTRAP.md](BOOTSTRAP.md)**.
+### The easy way: the setup wizard (recommended)
+
+On your laptop (Linux/macOS/WSL — the same place Ansible runs):
+
+```bash
+git clone <your-repo-url>
+cd homeserver-iac
+./setup.sh
+```
+
+The wizard connects to your server over SSH, **detects your disks, timezone and user IDs automatically**, asks a handful of questions (which disks to pool, how to back up, which VPN), generates all configuration — including the encrypted vault — and offers to deploy immediately. From blank server to running media stack in one sitting, no YAML editing required.
+
+### The manual way
+
+> Prefer to configure by hand, or want to understand what the wizard does? For a fully detailed walkthrough see **[BOOTSTRAP.md](BOOTSTRAP.md)**.
 
 **1. Clone the repository (on your laptop):**
 
@@ -135,6 +153,8 @@ cd homeserver-iac
 - Configure backups: point `backup_usb` at your USB drive, **or** set `restic_repository` to a remote target (SFTP/S3/B2), **or** set `backup_enabled: false` to skip backups.
 - *(Recommended)* paste a free [healthchecks.io](https://healthchecks.io) ping URL into `backup_healthcheck_url` so you get an email when backups stop working.
 - Set `lan_subnet` to your home network's subnet (e.g. `192.168.1.0/24`). **This matters:** it's what lets you reach the WebUIs from your LAN and keeps SSH open through the firewall.
+- Configure the VPN in `gluetun_env` — the default block is OpenVPN; a WireGuard example is included. Any [Gluetun-supported provider/protocol](https://github.com/qdm12/gluetun-wiki) works.
+- Pick your optional services in `compose_profiles` (`iptv` = Dispatcharr, `management` = Portainer, `logs` = Dozzle).
 - Adjust `timezone`, `puid`/`pgid` if needed.
 
 **4. Add your secrets to the vault** — the secrets live in an encrypted Ansible Vault file:
@@ -143,7 +163,7 @@ cd homeserver-iac
 ansible-vault edit ansible/inventory/group_vars/vault.yml
 ```
 
-It must define these keys:
+It must define the keys referenced by your `gluetun_env` block, plus Tailscale and Restic. For OpenVPN:
 
 ```yaml
 vault_vpn_provider: "your-provider"      # e.g. mullvad, protonvpn, nordvpn
@@ -152,6 +172,8 @@ vault_vpn_password: "your-vpn-password"
 vault_tailscale_key: "tskey-auth-xxxx"
 vault_restic_password: "a-strong-backup-password"
 ```
+
+For WireGuard, replace the user/password keys with `vault_wireguard_private_key` and `vault_wireguard_addresses` (and switch `gluetun_env` to the WireGuard example in `all.yml`).
 
 **5. Save your vault password** — create a `.vault_pass` file in the project root (already git-ignored, so it never reaches GitHub):
 
@@ -183,9 +205,9 @@ After deployment, browse to your server's IP (on your LAN or over Tailscale) on 
 | Prowlarr (indexers) | 9696 | `http://<server>:9696` |
 | Bazarr (subtitles) | 6767 | `http://<server>:6767` |
 | qBittorrent | 8080 | `http://<server>:8080` |
-| Dispatcharr (IPTV) | 8000 | `http://<server>:8000` |
-| Portainer | 9443 | `https://<server>:9443` |
-| Dozzle (logs) | 8888 | `http://<server>:8888` |
+| Dispatcharr (IPTV, optional) | 8000 | `http://<server>:8000` |
+| Portainer (optional) | 9443 | `https://<server>:9443` |
+| Dozzle (logs, optional) | 8888 | `http://<server>:8888` |
 
 > qBittorrent and Dispatcharr are served *through* Gluetun. If a WebUI is unreachable from your LAN, double-check that `lan_subnet` in `all.yml` matches your actual network.
 
@@ -238,19 +260,20 @@ All containers deliberately run on the `:latest` tag and are pulled on every dep
 
 ```text
 .
+├── setup.sh                        # interactive setup wizard (the recommended way in)
 ├── ansible/
 │   ├── ansible.cfg
 │   ├── site.yml                    # top-level playbook (base → docker → media_stack)
 │   ├── inventory/
 │   │   ├── hosts.yml               # your server's IP and user
 │   │   └── group_vars/
-│   │       ├── all.yml             # disks, backups, subnet, non-secret config
+│   │       ├── all.yml             # disks, backups, VPN, profiles, non-secret config
 │   │       └── vault.yml           # encrypted secrets (VPN, Tailscale, Restic)
 │   └── roles/
 │       ├── base/                   # updates, packages, disks, MergerFS, Tailscale, UFW,
 │       │                           # auto security updates, backup/restore/check scripts
 │       ├── docker/                 # Docker engine + Compose plugin + log rotation
-│       └── media_stack/            # renders .env, deploys compose, brings the stack up
+│       └── media_stack/            # renders .env + gluetun.env, deploys compose, starts stack
 ├── compose/
 │   └── docker-compose.yml          # the full service definition
 ├── .github/workflows/ci.yml        # lints Ansible + validates compose on every push
