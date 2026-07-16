@@ -1,12 +1,29 @@
 #!/bin/bash
 set -e
-export RESTIC_REPOSITORY="/mnt/usb-backup/restic-repo"
-export RESTIC_PASSWORD="{{ restic_pass }}"
 
-read -p "Warning: this overwrites /opt/appdata. Are you sure? (y/N) " -n 1 -r
+export RESTIC_REPOSITORY="{{ restic_repository }}"
+export RESTIC_PASSWORD="{{ restic_pass }}"
+{% for key, value in restic_env.items() %}
+export {{ key }}="{{ value }}"
+{% endfor %}
+
+# Test mode: restore into a scratch directory so you can practice/verify
+# disaster recovery without touching the live appdata.
+if [[ "${1:-}" == "--test" ]]; then
+    echo "TEST MODE: restoring the latest snapshot to /tmp/restore-test (nothing is overwritten)."
+    restic restore latest --target /tmp/restore-test
+    echo "Test restore complete. Inspect /tmp/restore-test{{ appdata_dir }} and remove it afterwards:"
+    echo "  rm -rf /tmp/restore-test"
+    exit 0
+fi
+
+read -p "Warning: this overwrites {{ appdata_dir }}. Are you sure? (y/N) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    mkdir -p /opt/appdata
+    echo "Stopping the stack..."
+    docker compose --project-directory "{{ appdata_dir }}" stop || true
+    mkdir -p "{{ appdata_dir }}"
     restic restore latest --target /
-    echo "Restore complete! Reboot your server."
+    echo "Restore complete! Reboot the server, or bring the stack back up with:"
+    echo "  docker compose --project-directory {{ appdata_dir }} up -d"
 fi

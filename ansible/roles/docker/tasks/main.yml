@@ -32,6 +32,21 @@
     state: present
     update_cache: true
 
+# Without limits, container logs grow unbounded and eventually fill the disk
+- name: Configure Docker log rotation
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "10m",
+          "max-file": "3"
+        }
+      }
+    mode: '0644'
+  notify: Restart docker
+
 - name: Start and enable the Docker service
   ansible.builtin.service:
     name: docker

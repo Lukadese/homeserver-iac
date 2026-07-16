@@ -9,16 +9,48 @@ storage_merged: "/mnt/storage"
 # Change this to match your home network's subnet.
 lan_subnet: "192.168.1.0/24"
 
-# Look these UUIDs up with 'blkid' in the terminal
+# --- Storage ---
+# The data disks that make up the MergerFS pool at /mnt/storage.
+# One entry per disk — works with a single disk or with many.
+# Look the UUIDs up with 'blkid'. 'fstype' is optional and defaults to ext4.
 data_disks:
   - id: "UUID=1111-2222-3333-4444"
     path: "/mnt/disk1"
   - id: "UUID=5555-6666-7777-8888"
     path: "/mnt/disk2"
+    # fstype: xfs
 
+# --- Backups ---
+# Set to false on machines without any backup target. This disables the
+# backup/restore scripts and the cron schedule entirely.
+backup_enabled: true
+
+# Where Restic stores the backups. Any Restic backend works, for example:
+#   Local/USB drive:  "/mnt/usb-backup/restic-repo"  (also configure backup_usb below)
+#   SFTP:             "sftp:user@nas:/backups/restic-repo"
+#   Amazon S3:        "s3:s3.amazonaws.com/bucket-name"
+#   Backblaze B2:     "b2:bucket-name:restic-repo"
+# Cloud backends need credentials — add them under restic_env.
+restic_repository: "/mnt/usb-backup/restic-repo"
+
+# Extra environment variables for Restic (cloud credentials). Keep the values
+# in the vault. Example:
+# restic_env:
+#   B2_ACCOUNT_ID: "{{ vault_b2_account_id }}"
+#   B2_ACCOUNT_KEY: "{{ vault_b2_account_key }}"
+restic_env: {}
+
+# Locally attached backup drive. Remove (or comment out) this whole block if
+# you back up to a remote repository instead. 'fstype' defaults to ext4.
 backup_usb:
   id: "UUID=9999-AAAA-BBBB-CCCC"
   path: "/mnt/usb-backup"
+
+# Optional but strongly recommended: a monitoring URL that is pinged after
+# every successful backup, so you get alerted when backups stop working.
+# Create a free check at https://healthchecks.io and paste its ping URL here.
+# Leave empty to disable.
+backup_healthcheck_url: ""
 
 # Secrets pulled from the Ansible Vault
 vpn_provider: "{{ vault_vpn_provider }}"
