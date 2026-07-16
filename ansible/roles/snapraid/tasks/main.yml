@@ -1,0 +1,47 @@
+---
+- name: Install SnapRAID
+  ansible.builtin.apt:
+    name: snapraid
+    state: present
+
+- name: Create mount points for the parity disks
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: '0755'
+  loop: "{{ snapraid_parity_disks }}"
+
+- name: Mount the parity disks
+  ansible.posix.mount:
+    path: "{{ item.path }}"
+    src: "{{ item.id }}"
+    fstype: "{{ item.fstype | default('ext4') }}"
+    opts: defaults,noatime
+    state: mounted
+  loop: "{{ snapraid_parity_disks }}"
+
+- name: Create the SnapRAID content directory
+  ansible.builtin.file:
+    path: /var/snapraid
+    state: directory
+    mode: '0755'
+
+- name: Configure SnapRAID
+  ansible.builtin.template:
+    src: snapraid.conf.j2
+    dest: /etc/snapraid.conf
+    mode: '0644'
+
+- name: Deploy the SnapRAID maintenance script
+  ansible.builtin.template:
+    src: snapraid-maintenance.sh.j2
+    dest: /opt/scripts/snapraid-maintenance.sh
+    mode: '0700'
+
+- name: Schedule the daily SnapRAID sync and scrub via cron
+  ansible.builtin.cron:
+    name: "Daily SnapRAID Maintenance"
+    minute: "0"
+    hour: "3"
+    job: "/bin/bash /opt/scripts/snapraid-maintenance.sh >> /var/log/snapraid.log 2>&1"
+    user: root

@@ -58,6 +58,8 @@ Either way, finish with **[Step 8: Wire up the apps](#step-8-wire-up-the-apps-on
      # add more disks by adding more entries; optional per-disk 'fstype' (default ext4)
    ```
 
+   *(Optional but recommended with 2+ data disks)* — protect your media against disk failure by dedicating one disk to `snapraid_parity_disks`. It must be at least as large as your largest data disk and must not be listed under `data_disks`. A failed data disk can then be rebuilt with `snapraid fix` instead of re-downloading everything.
+
    **Backups** — pick the option that matches your machine:
    - *USB drive:* set the UUID in `backup_usb` (the default `restic_repository` already points at it).
    - *Remote target:* remove the `backup_usb` block and set `restic_repository` to e.g. `sftp:user@nas:/backups/restic-repo` or `b2:bucket:repo`. Put the cloud credentials in `restic_env` (values in the vault).

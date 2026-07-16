@@ -135,7 +135,7 @@
   ansible.builtin.copy:
     dest: /etc/logrotate.d/homeserver
     content: |
-      /var/log/restic.log /var/log/watchdog.log {
+      /var/log/restic.log /var/log/watchdog.log /var/log/snapraid.log {
           weekly
           rotate 4
           compress

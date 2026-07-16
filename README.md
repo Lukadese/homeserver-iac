@@ -33,6 +33,7 @@ Everything — the OS, disks, networking, containers and backups — is describe
 - **100% GitOps & IaC** — the complete server configuration (OS, disks, network, containers, backups) lives in Ansible playbooks. Change it in Git, deploy it centrally.
 - **Intel QuickSync hardware transcoding** — full hardware H.265/HEVC transcoding via the `/dev/dri` GPU mapping in Jellyfin, so the CPU stays cool and idle.
 - **Storage pooling with MergerFS** — any number of data disks (one or many) is transparently combined into one virtual pool at `/mnt/storage`, without RAID overhead. Add a disk by adding one entry to a list.
+- **Optional SnapRAID parity** — dedicate one disk as parity and a failed data disk can be *rebuilt* instead of re-downloaded, with a daily sync + scrub guarding against silent bit rot. One list in `all.yml` turns it on.
 - **TRaSH Guides-compliant layout** — a single shared `data` mount enables instant **hardlinks (atomic moves)** between qBittorrent and Radarr/Sonarr, avoiding a second copy and unnecessary disk wear.
 - **VPN kill switch via Gluetun** — qBittorrent and Dispatcharr route *all* their traffic through the Gluetun VPN container. If the VPN drops, Gluetun blocks all traffic instantly. Works with **any Gluetun-supported provider, over OpenVPN or WireGuard**.
 - **Guided setup wizard** — `./setup.sh` detects your server's disks and settings over SSH and generates the entire configuration interactively, encrypted vault included.
@@ -283,7 +284,8 @@ All containers deliberately run on the `:latest` tag and are pulled on every dep
 │   │                               # (your real vault.yml is git-ignored)
 │   └── roles/
 │       ├── base/                   # updates, packages, disks, MergerFS, Tailscale, UFW,
-│       │                           # auto security updates, backup/restore/check scripts
+│       │                           # auto updates/reboots, watchdog, backup/restore scripts
+│       ├── snapraid/               # optional parity protection (sync + scrub)
 │       ├── docker/                 # Docker engine + Compose plugin + log rotation
 │       └── media_stack/            # renders .env + gluetun.env, deploys compose, starts stack
 ├── compose/
