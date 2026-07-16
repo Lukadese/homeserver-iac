@@ -6,8 +6,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Test Docker Compose Syntax
-        # --profile "*" also validates the optional profile-gated services
-        run: docker compose -f compose/docker-compose.yml --profile "*" config -q
+        # --profile "*" also validates the optional profile-gated services;
+        # the hwaccel overlay is validated together with the base file
+        run: docker compose -f compose/docker-compose.yml -f compose/hwaccel.yml --profile "*" config -q
       - name: Install Ansible Lint
         run: pip install ansible-lint
       - name: Install required Ansible collections

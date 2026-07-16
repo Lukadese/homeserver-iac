@@ -1,0 +1,13 @@
+# Intel QuickSync hardware-transcoding overlay.
+# Applied on top of docker-compose.yml when hw_transcoding is true (the
+# default). Disable hw_transcoding in all.yml on VMs or machines without an
+# Intel iGPU — mapping a non-existent /dev/dri prevents the container from
+# starting.
+services:
+  jellyfin:
+    devices:
+      - /dev/dri:/dev/dri # Intel QuickSync
+    # Required so the PUID user can access /dev/dri (otherwise transcoding falls back to the CPU)
+    group_add:
+      - "render"
+      - "video"

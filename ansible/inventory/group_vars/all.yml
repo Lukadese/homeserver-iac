@@ -16,6 +16,11 @@ lan_subnet: "192.168.1.0/24"
 #   logs        -> Dozzle
 compose_profiles: [iptv, management, logs]
 
+# Intel QuickSync hardware transcoding for Jellyfin. Set to false on VMs,
+# cloud instances or machines without an Intel iGPU — mapping the missing
+# /dev/dri device would otherwise prevent Jellyfin from starting.
+hw_transcoding: true
+
 # --- VPN (Gluetun) ---
 # Every key in this dict is passed to the Gluetun container as an environment
 # variable, so any provider/protocol from the Gluetun wiki works:

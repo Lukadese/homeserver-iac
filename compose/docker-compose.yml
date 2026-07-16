@@ -84,12 +84,9 @@ services:
     volumes:
       - ${APPDATA_DIR}/jellyfin:/config
       - ${STORAGE_DIR}/data/media:/data/media
-    devices:
-      - /dev/dri:/dev/dri # Intel QuickSync
-    # Required so the PUID user can access /dev/dri (otherwise transcoding falls back to the CPU)
-    group_add:
-      - "render"
-      - "video"
+    # Intel QuickSync (/dev/dri) lives in the hwaccel.yml overlay, applied only
+    # when hw_transcoding is enabled — so this file also runs on VMs and
+    # machines without an Intel iGPU.
     restart: unless-stopped
 
   radarr:

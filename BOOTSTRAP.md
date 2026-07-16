@@ -75,6 +75,8 @@ Either way, finish with **[Step 8: Wire up the apps](#step-8-wire-up-the-apps-on
 
    **Optional services** — pick what you want in `compose_profiles`: `iptv` (Dispatcharr), `management` (Portainer), `logs` (Dozzle). Remove a profile and its container simply won't be deployed.
 
+   **Hardware transcoding** — set `hw_transcoding: false` when deploying to a VM, a cloud instance or any machine without an Intel iGPU (the wizard detects this automatically). With it on, Jellyfin gets `/dev/dri` mapped for QuickSync.
+
    Also adjust `timezone` and `puid`/`pgid` if needed.
 
 ### Step 5: Create your secrets vault
@@ -183,7 +185,7 @@ From now on every new (and existing) download automatically gets subtitles in yo
 **5. Jellyfin — `http://<server>:8096`**
 
 - Run the first-time wizard: create your admin account and add two libraries: **Movies** → `/data/media/movies` and **Shows** → `/data/media/tv`.
-- Enable hardware transcoding: **Dashboard → Playback → Transcoding** → Hardware acceleration = **Intel QuickSync (QSV)**. The GPU device is already mapped into the container for you.
+- Enable hardware transcoding: **Dashboard → Playback → Transcoding** → Hardware acceleration = **Intel QuickSync (QSV)**. The GPU device is already mapped into the container when `hw_transcoding` is on (the default on machines with an Intel iGPU — the wizard detects this automatically). On a VM or GPU-less machine, skip this step.
 - *(Optional)* make subtitles appear automatically: per user under **Settings → Subtitles**, set *Preferred subtitle language* (e.g. Dutch) and *Subtitle mode* = **Default** — Jellyfin then auto-selects the subs Bazarr downloaded.
 
 **6. Jellyseerr — `http://<server>:5055`** *(where you and your housemates request media)*

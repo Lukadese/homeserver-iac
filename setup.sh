@@ -85,6 +85,7 @@ FACTS="$(ssh -o ConnectTimeout=10 "$TARGET" bash -s <<'EOS'
 echo "FACT_TZ=$(timedatectl show -p Timezone --value 2>/dev/null || cat /etc/timezone 2>/dev/null || echo Europe/Brussels)"
 echo "FACT_PUID=$(id -u)"
 echo "FACT_PGID=$(id -g)"
+echo "FACT_DRI=$([ -e /dev/dri ] && echo yes || echo no)"
 echo "---DISKS---"
 lsblk -P -o NAME,SIZE,FSTYPE,UUID,MOUNTPOINT,TYPE
 EOS
@@ -93,7 +94,16 @@ EOS
 FACT_TZ="$(sed -n 's/^FACT_TZ=//p' <<<"$FACTS")"
 FACT_PUID="$(sed -n 's/^FACT_PUID=//p' <<<"$FACTS")"
 FACT_PGID="$(sed -n 's/^FACT_PGID=//p' <<<"$FACTS")"
+FACT_DRI="$(sed -n 's/^FACT_DRI=//p' <<<"$FACTS")"
 info "Connected. Detected timezone: $FACT_TZ, user id: $FACT_PUID, group id: $FACT_PGID"
+
+if [[ "$FACT_DRI" == "yes" ]]; then
+  HW_TRANSCODING="true"
+  info "Intel GPU (/dev/dri) detected — hardware transcoding will be enabled."
+else
+  HW_TRANSCODING="false"
+  info "No /dev/dri found (VM or no Intel iGPU) — hardware transcoding disabled."
+fi
 
 # --- 2. disks ----------------------------------------------------------------
 
@@ -292,6 +302,9 @@ lan_subnet: "$LAN_SUBNET"
 # --- Services ---
 # Optional services: iptv -> Dispatcharr, management -> Portainer, logs -> Dozzle
 compose_profiles: $PROFILES_YAML
+
+# Intel QuickSync for Jellyfin (auto-detected; false on VMs / no Intel iGPU).
+hw_transcoding: $HW_TRANSCODING
 
 # --- VPN (Gluetun) ---
 # Every key in this dict is passed to the Gluetun container as an environment
