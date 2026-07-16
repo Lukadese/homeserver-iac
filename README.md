@@ -19,6 +19,7 @@ Everything — the OS, disks, networking, containers and backups — is describe
 - [Requirements](#requirements)
 - [Quick start](#quick-start)
 - [Accessing your services](#accessing-your-services)
+- [Watching away from home](#watching-away-from-home)
 - [First-run configuration](#first-run-configuration)
 - [Backups & disaster recovery](#backups--disaster-recovery)
 - [Running it for years](#running-it-for-years)
@@ -224,6 +225,24 @@ After deployment, browse to your server's IP (on your LAN or over Tailscale) on 
 | Dozzle (logs, optional) | 8888 | `http://<server>:8888` |
 
 > qBittorrent and Dispatcharr are served *through* Gluetun. If a WebUI is unreachable from your LAN, double-check that `lan_subnet` in `all.yml` matches your actual network.
+
+---
+
+## Watching away from home
+
+Remote access runs entirely over **Tailscale** — zero ports are exposed to the internet. To watch from anywhere:
+
+1. **Install the Tailscale app on the device you're watching from** — phone, tablet, laptop, and TVs too: Tailscale has apps for **Android TV / Fire TV and Apple TV**. Log in with the same account you used for the server.
+2. **Add the server in the Jellyfin app** using its Tailscale address: `http://<server-hostname>:8096` — MagicDNS makes the hostname work out of the box, and the `100.x.y.z` IP from the [Tailscale admin console](https://login.tailscale.com/admin/machines) always works as a fallback.
+3. **Tip: use the Tailscale address everywhere, including at home.** Tailscale routes local traffic directly over your LAN, so one server address works in every location — your apps never need to switch.
+
+This works for every service in the stack — requesting a movie in Jellyseerr from your phone on the road works exactly the same way.
+
+**Family outside your household:** the free Tailscale plan covers 3 users and 100 devices. Invite them to your tailnet (or share just the server node with theirs) — they install the app, log in, and use the same address.
+
+> This project deliberately ships **no reverse proxy or public exposure**: nothing is reachable from the internet, so there is no attack surface to patch and no domain to maintain. If you ever need to serve a viewer who can't run a Tailscale app (say, an old smart TV at a relative's house), *that* is the moment to look into a reverse proxy — not before.
+>
+> One prerequisite for years of trouble-free remote access: disable key expiry for the server in the Tailscale admin console — [BOOTSTRAP.md](BOOTSTRAP.md#step-7-run-the-playbook-deploy) walks you through it right after the deploy.
 
 ---
 
