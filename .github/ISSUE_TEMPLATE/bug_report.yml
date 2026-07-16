@@ -1,0 +1,64 @@
+name: 🐛 Bug report
+description: Something doesn't work as documented
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! The more precise you are, the faster it gets fixed.
+        ❓ **Setup questions belong in [Discussions](../discussions)** — Issues are for things that are actually broken.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+      placeholder: |
+        1. Ran ./setup.sh ...
+        2. Expected the playbook to ...
+        3. Instead it failed with ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output / logs
+      description: Playbook output, container logs (Dozzle / `docker logs <name>`), or wizard output. Remove secrets before pasting!
+      render: shell
+  - type: dropdown
+    id: deploy-method
+    attributes:
+      label: How did you deploy?
+      options:
+        - Setup wizard (./setup.sh)
+        - Manual configuration
+        - Not deployed yet — fails earlier
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Server OS
+      placeholder: e.g. Debian 13
+    validations:
+      required: true
+  - type: input
+    id: disks
+    attributes:
+      label: Disk layout
+      placeholder: e.g. 2 data disks (ext4) + USB backup drive
+    validations:
+      required: true
+  - type: input
+    id: vpn
+    attributes:
+      label: VPN provider & protocol
+      placeholder: e.g. Mullvad via WireGuard
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and discussions for this problem
+          required: true
+        - label: My pasted output contains no secrets (keys, passwords, auth tokens)
+          required: true
