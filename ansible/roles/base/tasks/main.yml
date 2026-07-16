@@ -24,6 +24,30 @@
   ansible.builtin.command: tailscale up --authkey={{ tailscale_key }}
   register: base_ts_out
   changed_when: "'already running' not in base_ts_out.stdout"
+  no_log: true
+
+- name: UFW - SSH toestaan (rate-limited, voorkomt buitensluiten)
+  community.general.ufw:
+    rule: limit
+    port: '22'
+    proto: tcp
+
+- name: UFW - volledige toegang via Tailscale-interface
+  community.general.ufw:
+    rule: allow
+    interface: tailscale0
+    direction: in
+
+- name: UFW - toegang toestaan vanaf lokaal netwerk
+  community.general.ufw:
+    rule: allow
+    src: "{{ lan_subnet }}"
+
+- name: UFW - standaardbeleid instellen en firewall activeren
+  community.general.ufw:
+    state: enabled
+    policy: deny
+    direction: incoming
 
 - name: Mappen maken voor data schijven
   ansible.builtin.file:
@@ -65,7 +89,10 @@
     path: "{{ storage_merged }}"
     src: "/mnt/disk*"
     fstype: fuse.mergerfs
-    opts: cache.files=partial,dropcacheonclose=true,category.create=epmfs
+    # requires-mounts-for zorgt dat MergerFS pas mount nadat de data-schijven gemount zijn (voorkomt lege pool na reboot)
+    opts: >-
+      cache.files=partial,dropcacheonclose=true,category.create=epmfs,{{
+      data_disks | map(attribute='path') | map('regex_replace', '^', 'x-systemd.requires-mounts-for=') | join(',') }}
     state: mounted
 
 - name: Scripts directory maken
