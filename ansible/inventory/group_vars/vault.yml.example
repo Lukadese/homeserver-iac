@@ -1,0 +1,27 @@
+---
+# Template for the encrypted secrets file. Two ways to use it:
+#
+#   Easy:   run ./setup.sh from the repository root — it generates and
+#           encrypts vault.yml for you.
+#
+#   Manual: copy this file, fill in your values, then encrypt it:
+#             cp vault.yml.example vault.yml
+#             ansible-vault encrypt vault.yml
+#
+# vault.yml is git-ignored in this template so personal secrets can never
+# land in a public repository. In your own PRIVATE copy you may remove that
+# .gitignore line to commit the encrypted vault (that is safe as long as
+# the vault password is strong and stored elsewhere).
+
+vault_vpn_provider: "mullvad"            # as named in the Gluetun wiki
+
+# OpenVPN (matches the default gluetun_env block in all.yml):
+vault_vpn_user: "your-vpn-username"
+vault_vpn_password: "your-vpn-password"
+
+# WireGuard (only if you switched gluetun_env to the WireGuard example):
+# vault_wireguard_private_key: "your-wireguard-private-key"
+# vault_wireguard_addresses: "10.64.222.21/32"
+
+vault_tailscale_key: "tskey-auth-xxxx"   # https://login.tailscale.com/admin/settings/keys
+vault_restic_password: "a-strong-backup-password"
