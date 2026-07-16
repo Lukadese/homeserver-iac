@@ -198,7 +198,7 @@ cd ansible
 ansible-playbook -i inventory/hosts.yml site.yml --vault-password-file ../.vault_pass
 ```
 
-Ansible now does everything: system updates, base packages, disk mounting + MergerFS, Tailscale, the firewall, the backup schedule, Docker, and the full media stack. When it finishes, your server is live.
+Ansible now does everything: system updates, base packages, disk mounting + MergerFS, Tailscale, the firewall, the backup schedule, Docker, and the full media stack. When it finishes, your server is live — finish with the one-time [First-run configuration](#first-run-configuration) to connect the apps to each other.
 
 ---
 
@@ -225,11 +225,11 @@ After deployment, browse to your server's IP (on your LAN or over Tailscale) on 
 
 ## First-run configuration
 
-A few things are configured once, inside the apps themselves:
+After the deploy everything is *running*, but the apps don't know each other yet. One guided, one-time walkthrough (~30 minutes) connects them: qBittorrent's hidden first-run password and save path, your indexers in Prowlarr, the download client and root folders in Radarr/Sonarr, Jellyfin's libraries + QuickSync, and Jellyseerr on top. After that, requesting a movie in Jellyseerr makes it appear in Jellyfin fully automatically.
 
-1. **Connect the *arr apps** — in Radarr/Sonarr, add qBittorrent as the download client (host `gluetun`, port `8080`), and add Prowlarr as your indexer manager. Point every app's root folders at `/data/media/...` and the download client at `/data/torrents/...` so hardlinks work.
-2. **HEVC/x265 without transcoding** — import the TRaSH Guides Custom Formats for `HEVC/x265` in Radarr and Sonarr and give them a score of e.g. `+100`. This makes your download client grab compact, pre-compressed files that play directly on capable clients — so your N100 barely has to transcode at all.
-3. **Enable hardware transcoding in Jellyfin** — Dashboard → Playback → set Hardware acceleration to *Intel QuickSync (QSV)*. The `/dev/dri` device is already wired up for you.
+👉 **Follow [Step 8: Wire up the apps in BOOTSTRAP.md](BOOTSTRAP.md#step-8-wire-up-the-apps-one-time-30-minutes)** — every click is written out, including the gotchas.
+
+**Pro tip — HEVC/x265 without transcoding:** once the apps are connected, import the TRaSH Guides Custom Formats for `HEVC/x265` in Radarr and Sonarr and give them a score of e.g. `+100`. Your download client then grabs compact, pre-compressed files that play directly on capable clients — so your N100 barely has to transcode at all.
 
 ---
 

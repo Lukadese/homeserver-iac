@@ -16,6 +16,8 @@ After completing **Step 1** and **Step 2** below, you can skip every other step 
 
 It connects to your server, detects your disks/timezone/user IDs, walks you through backups, VPN (OpenVPN or WireGuard) and optional services, generates all configuration files including the encrypted vault, and offers to deploy immediately. The manual steps below configure exactly the same things by hand.
 
+Either way, finish with **[Step 8: Wire up the apps](#step-8-wire-up-the-apps-one-time-30-minutes)** — the one-time in-app configuration that connects qBittorrent, Prowlarr, the *arrs, Jellyfin and Jellyseerr together.
+
 ### Step 1: OS & network
 
 1. Install a clean copy of **Debian** (or Ubuntu Server) on the server.
@@ -130,7 +132,50 @@ Ansible now takes care of everything:
 - Installing the backup, restore and verification scripts and scheduling them via cron (daily backup at 04:00, weekly integrity check on Sunday at 05:00).
 - Installing Docker (with log rotation) and bringing up the full media stack.
 
-When it finishes, head to the [service list in the README](README.md#accessing-your-services) to log in to each app.
+When it finishes, the infrastructure is done — continue with Step 8 to wire the apps together.
+
+### Step 8: Wire up the apps (one-time, ~30 minutes)
+
+Everything is running, but the apps don't know each other yet. Walk through these once, in this order — afterwards the whole pipeline (request → download → library) is fully automatic. Replace `<server>` with your server's IP.
+
+> **How the apps talk to each other:** inside the Docker network, containers reach each other by name (`radarr`, `jellyfin`, ...) — that's why you'll enter hostnames like `gluetun` below while using `<server>:port` in your own browser. qBittorrent is the special case: it lives inside Gluetun's network, so other apps reach it at `gluetun:8080`.
+
+**1. qBittorrent — `http://<server>:8080`**
+
+- ⚠️ **The login password is hidden in the container logs.** The LinuxServer image generates a temporary password on first start. Find it in Dozzle (`http://<server>:8888`, click the `qbittorrent` container) or on the server with `docker logs qbittorrent`. Log in as `admin` with that password.
+- Set a permanent password: gear icon → **Options → WebUI → Authentication**.
+- Set the download location: **Options → Downloads → Default Save Path** = `/data/torrents`. *This path is what makes instant hardlinks (and no double disk usage) work — don't skip it.*
+
+**2. Prowlarr — `http://<server>:9696`** *(your indexer manager)*
+
+- On first visit, set up authentication (Forms + a username/password).
+- **Add your indexers/trackers** under **Indexers → Add Indexer**. This is the make-or-break step: without indexers, nothing can be found or downloaded.
+- Connect the apps under **Settings → Apps → +**:
+  - **Radarr**: Prowlarr server `http://prowlarr:9696`, Radarr server `http://radarr:7878`, API key from Radarr (**Settings → General → API Key**).
+  - **Sonarr**: same, with `http://sonarr:8989` and Sonarr's API key.
+- Prowlarr now pushes all your indexers to both apps automatically — you never configure indexers twice.
+
+**3. Radarr — `http://<server>:7878`** *(movies)* **and Sonarr — `http://<server>:8989`** *(TV)*
+
+Do this in both apps:
+
+- Set up authentication on first visit.
+- Root folder: **Settings → Media Management → Add Root Folder** → `/data/media/movies` (Radarr) / `/data/media/tv` (Sonarr).
+- Download client: **Settings → Download Clients → + → qBittorrent** → host `gluetun`, port `8080`, and the username/password from step 1.
+
+**4. Jellyfin — `http://<server>:8096`**
+
+- Run the first-time wizard: create your admin account and add two libraries: **Movies** → `/data/media/movies` and **Shows** → `/data/media/tv`.
+- Enable hardware transcoding: **Dashboard → Playback → Transcoding** → Hardware acceleration = **Intel QuickSync (QSV)**. The GPU device is already mapped into the container for you.
+
+**5. Jellyseerr — `http://<server>:5055`** *(where you and your housemates request media)*
+
+- Choose **Use your Jellyfin account**, Jellyfin URL `http://jellyfin:8096`, and sync the libraries.
+- Under **Settings → Services**, add:
+  - **Radarr**: hostname `radarr`, port `7878`, its API key, quality profile, root folder `/data/media/movies`, mark as default.
+  - **Sonarr**: hostname `sonarr`, port `8989`, its API key, root folder `/data/media/tv`, mark as default.
+
+**✅ Test the pipeline:** request a movie in Jellyseerr → Radarr grabs it via your Prowlarr indexers → qBittorrent downloads it to `/data/torrents` (through the VPN) → Radarr instantly hardlinks it into `/data/media/movies` → it appears in Jellyfin. If that works, you're done — everything from here on is automatic.
 
 ---
 
