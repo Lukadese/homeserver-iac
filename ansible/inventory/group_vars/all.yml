@@ -47,6 +47,18 @@ data_disks:
     path: "/mnt/disk2"
     # fstype: xfs
 
+# --- SnapRAID parity (optional, recommended with 2+ data disks) ---
+# MergerFS has no redundancy: when a data disk dies, the media on it is gone
+# (the *arr apps can re-download it, but that takes a while). Dedicate one
+# disk as parity and SnapRAID can rebuild a failed data disk instead.
+# Rules: the parity disk must be at least as large as your largest data disk,
+# it must NOT be listed under data_disks, and it should be empty.
+# Fill this list and redeploy to enable; leave empty to skip. 'fstype' is
+# optional and defaults to ext4.
+snapraid_parity_disks: []
+#  - id: "UUID=AAAA-BBBB-CCCC-DDDD"
+#    path: "/mnt/parity1"
+
 # --- Backups ---
 # Set to false on machines without any backup target. This disables the
 # backup/restore scripts and the cron schedule entirely.

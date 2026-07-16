@@ -1,0 +1,25 @@
+#!/bin/bash
+# Daily SnapRAID maintenance: sync parity with the data disks, then scrub a
+# slice of the array to catch silent bit rot. Failures are reported to the
+# system watchdog URL so they become an alert, not a silent gap in parity.
+set -u
+
+fail() {
+    echo "ERROR: $1"
+{% if system_healthcheck_url %}
+    curl -fsS -m 10 --retry 3 --data-raw "SnapRAID: $1" "{{ system_healthcheck_url }}/fail" > /dev/null || true
+{% endif %}
+    exit 1
+}
+
+# Fix zero sub-second timestamps so sync can track files reliably
+snapraid touch > /dev/null 2>&1 || true
+
+echo "[$(date '+%F %T')] Starting SnapRAID sync..."
+snapraid sync || fail "sync failed — parity is out of date"
+
+# Scrub 8% of the array, oldest-checked blocks first (full array every ~2 weeks)
+echo "[$(date '+%F %T')] Starting SnapRAID scrub..."
+snapraid scrub -p 8 -o 30 || fail "scrub found problems — check /var/log/snapraid.log"
+
+echo "[$(date '+%F %T')] SnapRAID maintenance complete."

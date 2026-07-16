@@ -138,6 +138,18 @@ for i in "${DATA_SEL[@]}"; do
   idx=$((idx + 1))
 done
 
+PARITY_YAML="snapraid_parity_disks: []\n"
+echo "Optional: dedicate one disk as SnapRAID parity — it lets you rebuild a failed"
+echo "data disk instead of re-downloading everything. It must be at least as large"
+echo "as your largest data disk, empty, and NOT one of the data disks you selected."
+read -r -p "Which number is a PARITY disk? (leave empty to skip): " pn
+if [[ -n "$pn" ]]; then
+  [[ "$pn" =~ ^[0-9]+$ ]] && ((pn >= 1 && pn <= ${#DISK_NAME[@]})) || die "Invalid disk number: $pn"
+  p=$((pn - 1))
+  PARITY_YAML="snapraid_parity_disks:\n  - id: \"UUID=${DISK_UUID[$p]}\"\n    path: \"/mnt/parity1\"\n"
+  [[ "${DISK_FSTYPE[$p]}" != "ext4" ]] && PARITY_YAML+="    fstype: ${DISK_FSTYPE[$p]}\n"
+fi
+
 # --- 3. backups --------------------------------------------------------------
 
 bold "Step 3/6 — Backups"
@@ -293,6 +305,11 @@ cat <<EOF
 data_disks:
 EOF
 printf '%b' "$DATA_DISKS_YAML"
+cat <<EOF
+
+# --- SnapRAID parity (optional) ---
+EOF
+printf '%b' "$PARITY_YAML"
 cat <<EOF
 
 # --- Backups ---

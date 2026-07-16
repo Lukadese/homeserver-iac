@@ -4,5 +4,7 @@
   become: true
   roles:
     - base
+    - role: snapraid
+      when: snapraid_parity_disks | length > 0
     - docker
     - media_stack
